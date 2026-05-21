@@ -1,0 +1,1936 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Музикалното Оръдие</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; height: 100%; overflow: hidden; background: #050f05; font-family: 'Georgia', serif; }
+
+/* ═══════════════════════════════════════════════════
+   START SCREEN
+═══════════════════════════════════════════════════ */
+#startScreen {
+  position: fixed; inset: 0; z-index: 1000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  background: radial-gradient(ellipse at center, #0d2b0d 0%, #050f05 70%);
+}
+#startScreen h1 {
+  color: #ffd54f; font-size: clamp(22px, 5vw, 42px);
+  margin-bottom: 8px; text-align: center; letter-spacing: 1px;
+  text-shadow: 0 0 30px rgba(255,213,79,0.4);
+}
+#startScreen p {
+  color: #88aa88; font-size: clamp(12px, 2.5vw, 16px);
+  margin-bottom: 48px; text-align: center;
+}
+.startNote {
+  position: absolute; bottom: 20px; color: #3a5a3a; font-size: 11px; text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════
+   DESKTOP GAME WRAPPER
+═══════════════════════════════════════════════════ */
+#desktopGame { display: none; position: fixed; inset: 0; z-index: 500; }
+
+/* ═══════════════════════════════════════════════════
+   MOBILE GAME WRAPPER
+═══════════════════════════════════════════════════ */
+#mobileGame {
+  display: none; position: fixed; inset: 0; z-index: 500;
+  background: #050f05; overflow: hidden;
+  flex-direction: column;
+}
+
+/* Mobile layout */
+#mobileLayout {
+  display: flex; flex-direction: column; width: 100%; height: 100%;
+  overflow: hidden;
+}
+
+/* Top bar */
+#mobileTopBar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 10px; background: rgba(0,0,0,0.5);
+  border-bottom: 1px solid rgba(255,255,255,0.06); flex-shrink: 0; z-index: 10;
+}
+#mobileTopBar h2 { color: #ffd54f; font-size: 13px; font-style: italic; }
+#mobilePhaseTag {
+  font-size: 10px; padding: 3px 10px; border-radius: 10px;
+  background: rgba(255,100,0,0.0); color: transparent;
+  transition: all 0.3s; font-weight: bold;
+}
+#mobilePhaseTag.active {
+  background: rgba(255,100,0,0.85); color: #fff;
+}
+#mobileBackBtn {
+  background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+  color: #ccc; border-radius: 6px; padding: 4px 10px; font-size: 11px; cursor: pointer;
+}
+
+/* Ring area */
+#mobileRingWrap {
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; position: relative;
+  padding: 4px 0 2px;
+}
+#mobileRingCanvas { display: block; }
+
+/* Field area */
+#mobileFieldWrap {
+  flex: 1; position: relative; min-height: 0; overflow: hidden;
+}
+#mobileFieldCanvas { display: block; width: 100%; height: 100%; }
+
+/* Aim controls */
+#mobileAimBar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 6px 12px; gap: 8px; flex-shrink: 0;
+  background: rgba(0,0,0,0.4); border-top: 1px solid rgba(255,255,255,0.06);
+}
+.mobileAimBtn {
+  width: 52px; height: 52px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.2);
+  background: rgba(255,255,255,0.07); color: #fff; font-size: 22px;
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: background 0.1s;
+}
+.mobileAimBtn:active { background: rgba(255,255,255,0.18); }
+#mobileFireBtn {
+  flex: 1; height: 52px; border-radius: 26px;
+  background: linear-gradient(135deg, #c62828, #7f0000);
+  border: 2px solid rgba(255,120,120,0.35); color: #fff;
+  font-size: 15px; font-weight: bold; letter-spacing: 1px;
+  cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: opacity 0.1s;
+}
+#mobileFireBtn:active { opacity: 0.75; }
+#mobileFireBtn:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Staff + piano row */
+#mobileBottomRow {
+  display: flex; align-items: stretch; flex-shrink: 0;
+  background: rgba(0,0,0,0.45); border-top: 1px solid rgba(255,255,255,0.06);
+  height: 130px;
+}
+#mobileStaffWrap {
+  flex: 1; padding: 6px 6px 4px; overflow-y: auto; min-width: 0; overflow-x: hidden;
+}
+#mobileStaffWrap h4 { color: #ffd54f; font-size: 10px; font-style: italic; margin-bottom: 3px; }
+#mobileSwapInfo { font-size: 9px; color: #888; margin-top: 2px; }
+#mobilePlayBtn {
+  display: none; width: 100%; margin-top: 4px; padding: 5px;
+  background: linear-gradient(135deg, #43a047, #1b5e20);
+  color: white; border: none; border-radius: 5px; cursor: pointer;
+  font-size: 10px; font-weight: bold;
+}
+/* Piano hidden until phase 3 */
+#mobilePianoWrap {
+  width: 160px; flex-shrink: 0; padding: 4px 4px 0;
+  display: none; /* hidden until piano phase */
+  flex-direction: column; justify-content: flex-end;
+}
+#mobilePianoWrap.visible { display: flex; }
+#mobilePianoLabel { color: #ffd54f; font-size: 9px; font-style: italic; margin-bottom: 3px; }
+.mPianoKeys { position: relative; display: flex; }
+.mPianoKey {
+  flex: 1; height: 60px; background: linear-gradient(180deg,#f0f0f0,#fff);
+  border: 1px solid #888; border-radius: 0 0 4px 4px;
+  display: flex; align-items: flex-end; justify-content: center;
+  padding-bottom: 3px; font-size: 8px; color: #999;
+  cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: background 0.06s;
+}
+.mPianoKey:active, .mPianoKey.mPressed { background: #ddeeff !important; }
+.mPianoKey.mBlack {
+  position: absolute; top: 0; width: 14px; height: 38px;
+  background: linear-gradient(180deg,#222,#111); border-radius: 0 0 3px 3px;
+  z-index: 5; color: transparent; cursor: pointer;
+}
+.mPianoKey.mBlack:active { background: #445 !important; }
+
+/* Phase transition overlay — briefly covers screen at phase change */
+#mobilePhaseOverlay {
+  display: none; position: absolute; inset: 0; z-index: 80;
+  align-items: center; justify-content: center; flex-direction: column;
+  background: rgba(0,0,0,0.82);
+  pointer-events: all;
+}
+#mobilePhaseOverlay.show { display: flex; }
+#mobilePhaseOverlay h2 {
+  font-size: clamp(18px,5vw,28px); color: #ffd54f; margin-bottom: 10px; text-align: center;
+}
+#mobilePhaseOverlay p {
+  font-size: 13px; color: #ccc; text-align: center; max-width: 80vw; line-height: 1.6;
+}
+#mobilePhaseOverlayBtn {
+  margin-top: 18px; padding: 12px 32px;
+  background: linear-gradient(135deg,#43a047,#1b5e20);
+  color: #fff; border: none; border-radius: 10px; font-size: 15px; font-weight: bold;
+  cursor: pointer; -webkit-tap-highlight-color: transparent;
+}
+
+/* Swap balls panel — inline panel in bottom-right (same slot as piano) */
+#mobileSwapBalls {
+  display: none;
+  width: 160px; flex-shrink: 0; padding: 4px 4px 2px;
+  flex-direction: column; align-items: center; justify-content: flex-start;
+  overflow: hidden;
+  background: rgba(10,20,10,0.97);
+  border-left: 2px solid rgba(255,180,0,0.5);
+}
+#mobileSwapBalls.visible { display: flex; }
+#mobileSwapBallsTitle {
+  color: #ffd54f; font-size: 9px; font-weight: bold; text-align: center;
+  margin-bottom: 3px; line-height: 1.3;
+}
+.mSwapBallRow { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; width: 100%; }
+.mSwapBall {
+  width: 32px; height: 32px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 8px; font-weight: bold; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+  border: 2px solid rgba(255,255,255,0.3);
+  box-shadow: inset -3px -3px 6px rgba(0,0,0,0.3), 0 3px 8px rgba(0,0,0,0.4);
+  cursor: pointer; user-select: none; -webkit-tap-highlight-color: transparent;
+  transition: transform 0.12s, box-shadow 0.12s;
+}
+.mSwapBall:active { transform: scale(0.92); }
+.mSwapBall.mSwapUsed { filter: grayscale(1) brightness(0.3); pointer-events: none; }
+.mSwapBall.mSwapSelected {
+  border-color: #ffb300 !important;
+  box-shadow: 0 0 12px rgba(255,180,0,0.7), inset -3px -3px 6px rgba(0,0,0,0.3) !important;
+  transform: scale(1.1);
+}
+#mobileSwapClose {
+  margin-top: 6px; padding: 5px 18px; border-radius: 8px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2);
+  color: #ccc; font-size: 11px; cursor: pointer;
+}
+
+/* Mobile message */
+#mobileMsg {
+  position: absolute; top: 40%; left: 50%; transform: translate(-50%,-50%);
+  background: rgba(0,0,0,0.88); color: #fff; padding: 10px 18px;
+  border-radius: 12px; font-size: 13px; display: none; pointer-events: none;
+  text-align: center; border: 1px solid rgba(255,255,255,0.15); z-index: 60;
+  max-width: 85vw;
+}
+#mobilePendingBanner {
+  position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
+  background: rgba(255,165,0,0.92); color: #000; padding: 5px 14px;
+  border-radius: 12px; font-size: 11px; font-weight: bold;
+  display: none; pointer-events: none; z-index: 60; white-space: nowrap;
+  animation: pendingPulse 1.2s ease-in-out infinite;
+}
+@keyframes pendingPulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+</style>
+</head>
+<body>
+
+<!-- ═══════ START SCREEN ═══════ -->
+<div id="startScreen">
+  <h1>🎵 Музикалното Оръдие</h1>
+  <p>Образователна музикална игра на Ива Йорданова</p>
+  <div class="startNote">Изпрати линка по Viber и играй директно в браузъра</div>
+</div>
+
+<!-- ═══════ DESKTOP GAME (hidden initially, exact copy of v8) ═══════ -->
+<div id="desktopGame">
+<style>
+#dLayout { display:flex;width:100%;height:100%;align-items:stretch; }
+#dLeftPanel { width:180px;min-width:160px;background:rgba(0,0,0,0.55);border-right:1px solid rgba(255,255,255,0.08);padding:14px 12px;display:flex;flex-direction:column;gap:12px;z-index:5;flex-shrink:0; }
+#dGameWrap { flex:1;position:relative;overflow:hidden; }
+#dCanvas { display:block;width:100%;height:100%; }
+#dRightPanel { width:200px;min-width:180px;background:rgba(0,0,0,0.55);border-left:1px solid rgba(255,255,255,0.08);padding:14px 12px;display:flex;flex-direction:column;gap:10px;z-index:5;flex-shrink:0; }
+#dInstructions { color:#ccc;font-size:11px;line-height:1.75; }
+#dInstructions h3 { color:#ffd54f;font-size:12px;margin-bottom:8px;font-style:italic; }
+#dBallFence { margin-top:auto; }
+#dFenceLabel { font-size:10px;color:#ffd54f;margin-bottom:5px; }
+.dFenceBall { width:38px;height:38px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;margin:2px;box-shadow:inset -3px -3px 6px rgba(0,0,0,.3),inset 2px 2px 4px rgba(255,255,255,.3),0 3px 6px rgba(0,0,0,.5);user-select:none;border:2px solid rgba(255,255,255,.25);transition:transform .12s,box-shadow .12s;font-size:9px;font-weight:bold;color:rgba(255,255,255,.95);text-shadow:0 1px 3px rgba(0,0,0,.8);text-align:center;line-height:1.1; }
+.dFenceBall:hover:not(.dDisabled) { transform:scale(1.2);box-shadow:0 0 10px rgba(255,255,255,.3); }
+.dFenceBall.dLoaded { animation:dpulse .6s ease; }
+.dFenceBall.dDisabled { filter:grayscale(.7) brightness(.45);cursor:not-allowed;pointer-events:none; }
+.dFenceBall.dUsed { filter:grayscale(1) brightness(.3);cursor:not-allowed;pointer-events:none; }
+@keyframes dpulse { 0%{transform:scale(1)} 50%{transform:scale(1.35)} 100%{transform:scale(1)} }
+#dPhaseBanner { display:none;position:absolute;top:10px;left:50%;transform:translateX(-50%);background:linear-gradient(135deg,rgba(180,60,20,.95),rgba(120,30,10,.95));color:#fff;padding:8px 22px;border-radius:20px;font-size:13px;font-weight:bold;border:1px solid rgba(255,180,100,.4);z-index:15;pointer-events:none;box-shadow:0 3px 16px rgba(180,60,20,.5);white-space:nowrap; }
+#dPendingBanner { display:none;position:absolute;top:48px;left:50%;transform:translateX(-50%);background:rgba(255,165,0,.92);color:#000;padding:5px 18px;border-radius:14px;font-size:12px;font-weight:bold;z-index:15;pointer-events:none;white-space:nowrap;border:1px solid rgba(255,220,100,.6);box-shadow:0 2px 10px rgba(255,165,0,.5);animation:dpendPulse 1.2s ease-in-out infinite; }
+@keyframes dpendPulse { 0%,100%{opacity:1} 50%{opacity:.6} }
+#dNoteBook h3 { color:#ffd54f;font-size:12px;font-style:italic;margin-bottom:8px; }
+#dStaffContainer { background:rgba(255,255,255,.03);border-radius:6px;padding:8px 4px;min-height:200px;flex:1;overflow-y:auto; }
+#dSwapCount { font-size:10px;color:#aaa;text-align:center;margin-top:4px; }
+#dPlayBtn { padding:8px;background:linear-gradient(135deg,#43a047,#1b5e20);color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:bold;box-shadow:0 3px 10px rgba(67,160,71,.35);transition:opacity .15s; }
+#dPlayBtn:hover { opacity:.85; }
+#dPianoWrap { position:absolute;bottom:0;left:50%;transform:translateX(-50%);z-index:10;pointer-events:all; }
+.dPianoKey { height:75px;background:linear-gradient(180deg,#f5f5f5,#fff);border:1px solid #888;border-radius:0 0 5px 5px;cursor:pointer;position:relative;display:inline-flex;align-items:flex-end;justify-content:center;padding-bottom:4px;font-size:9px;color:#999;transition:background .06s;user-select:none;box-shadow:1px 3px 5px rgba(0,0,0,.45); }
+.dPianoKey:active,.dPianoKey.dPressed { background:#ddeeff!important;box-shadow:0 1px 2px rgba(0,0,0,.3); }
+.dPianoKey.dBlack { background:linear-gradient(180deg,#222,#111);color:#ccc;height:46px;width:20px!important;margin:0 -10px;z-index:5;border-radius:0 0 3px 3px;font-size:7px;padding-bottom:3px;box-shadow:1px 3px 6px rgba(0,0,0,.8); }
+.dPianoKey.dBlack:active,.dPianoKey.dBlack.dPressed { background:#445!important; }
+#dMessage { position:absolute;top:45%;left:50%;transform:translate(-50%,-50%);background:rgba(10,15,10,.9);color:#fff;padding:10px 20px;border-radius:10px;font-size:14px;display:none;pointer-events:none;text-align:center;border:1px solid rgba(255,255,255,.15);box-shadow:0 4px 20px rgba(0,0,0,.6);z-index:20; }
+#dOverlay3d { position:fixed;inset:0;background:rgba(0,0,0,.9);display:none;align-items:center;justify-content:center;flex-direction:column;z-index:300;pointer-events:all; }
+#dSphere3d { width:190px;height:190px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none;box-shadow:inset -20px -20px 40px rgba(0,0,0,.45),inset 10px 10px 30px rgba(255,255,255,.2),0 12px 35px rgba(0,0,0,.6); }
+#dSphereLabel { color:#fff;font-size:20px;margin-top:14px;font-weight:bold; }
+#dSphereHint { color:#aaa;font-size:11px;margin-top:5px; }
+#dLoadBtn { margin-top:14px;padding:10px 26px;background:linear-gradient(135deg,#e53935,#b71c1c);color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:bold; }
+#dCloseOverlay { margin-top:8px;padding:6px 16px;background:rgba(255,255,255,.08);color:#ccc;border:1px solid rgba(255,255,255,.15);border-radius:6px;cursor:pointer;font-size:12px; }
+#dBackBtn { position:absolute;top:8px;right:8px;z-index:100;background:rgba(0,0,0,.6);border:1px solid rgba(255,255,255,.2);color:#ccc;border-radius:6px;padding:5px 12px;font-size:11px;cursor:pointer; }
+</style>
+<div id="dLayout">
+  <div id="dLeftPanel">
+    <div id="dInstructions">
+      <h3>🎯 Как се играе</h3>
+      1. Хвани движещо се топче<br>
+      2. Влачи го до <span style="color:#ef9a9a;font-weight:bold">оръдието</span><br>
+      3. Движи мишката → оръдието се върти<br>
+      4. Клик → изстрел!<br><br>
+      5. Уцели клавиш → записва нота<br><br>
+      <span style="color:#ffd54f">След края на играта:</span><br>
+      6. Избери топче за смяна<br>
+      7. Зареди → уцели <span style="color:#90caf9">дупката</span><br>
+      8. Избери нота → заменя се<br><br>
+      9. Натисни ▶ и изсвири!
+    </div>
+    <div id="dBallFence">
+      <div id="dFenceLabel">🔄 Смяна на ноти<br><span style="color:#888;font-size:9px">(активира се след края)</span></div>
+    </div>
+  </div>
+  <div id="dGameWrap">
+    <canvas id="dCanvas"></canvas>
+    <div id="dPianoWrap"></div>
+    <div id="dPhaseBanner">🔄 ФАЗА СМЯНА — уцели дупката!</div>
+    <div id="dPendingBanner"></div>
+    <div id="dMessage"></div>
+    <button id="dBackBtn">← Начало</button>
+  </div>
+  <div id="dRightPanel">
+    <div id="dNoteBook">
+      <h3>🎵 Нотна тетрадка</h3>
+      <div id="dStaffContainer"></div>
+      <div id="dSwapCount"></div>
+      <button id="dPlayBtn">▶ Изсвири!</button>
+    </div>
+  </div>
+</div>
+<div id="dOverlay3d">
+  <div id="dSphere3d"></div>
+  <div id="dSphereLabel"></div>
+  <div id="dSphereHint">Върти с мишката</div>
+  <button id="dLoadBtn">🎯 Зареди в оръдието</button>
+  <button id="dCloseOverlay">✕ Затвори</button>
+</div>
+</div><!-- end desktopGame -->
+
+<!-- ═══════ MOBILE GAME ═══════ -->
+<div id="mobileGame">
+  <div id="mobileLayout">
+    <div id="mobileTopBar">
+      <h2>🎵 Музикалното Оръдие</h2>
+      <div id="mobilePhaseTag">ФАЗА СМЯНА</div>
+      <button id="mobileBackBtn">🔄 Нова игра</button>
+    </div>
+    <div id="mobileRingWrap">
+      <canvas id="mobileRingCanvas"></canvas>
+    </div>
+    <div id="mobileFieldWrap">
+      <canvas id="mobileFieldCanvas"></canvas>
+      <div id="mobileMsg"></div>
+      <div id="mobilePendingBanner"></div>
+    </div>
+    <div id="mobileAimBar">
+      <div class="mobileAimBtn" id="mAimLeft">◀</div>
+      <button id="mobileFireBtn">🔥 ИЗСТРЕЛ</button>
+      <div class="mobileAimBtn" id="mAimRight">▶</div>
+    </div>
+    <div id="mobileBottomRow">
+      <div id="mobileStaffWrap">
+        <h4>🎵 Нотна тетрадка</h4>
+        <div id="mobileStaffContainer"></div>
+        <div id="mobileSwapInfo"></div>
+        <button id="mobilePlayBtn">▶ Изсвири!</button>
+      </div>
+      <!-- Swap balls panel — inline, same slot as piano -->
+      <div id="mobileSwapBalls">
+        <div id="mobileSwapBallsTitle">🔄 Смяна</div>
+        <div class="mSwapBallRow" id="mSwapBallRow"></div>
+        <button id="mobileSkipSwap" style="margin-top:4px;padding:4px 10px;border-radius:6px;background:rgba(100,200,100,0.15);border:1px solid rgba(100,200,100,0.3);color:#aaa;font-size:9px;cursor:pointer;">▶ Пиано</button>
+      </div>
+      <div id="mobilePianoWrap">
+        <div id="mobilePianoLabel">🎹 Пиано</div>
+        <div id="mobilePianoKeys"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Phase transition overlay -->
+  <div id="mobilePhaseOverlay">
+    <h2 id="mobilePhaseOverlayTitle"></h2>
+    <p id="mobilePhaseOverlayText"></p>
+    <button id="mobilePhaseOverlayBtn">Напред →</button>
+  </div>
+</div>
+
+<script>
+'use strict';
+
+// ═══════════════════════════════════════════════════════════
+// SHARED CONSTANTS & AUDIO
+// ═══════════════════════════════════════════════════════════
+const SHARED = {
+  NOTES_EN:  ['C','D','E','F','G','A','B'],
+  NOTES_BG:  ['До','Ре','Ми','Фа','Сол','Ла','Си'],
+  NOTE_COLORS: ['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#00acc1'],
+  BALL_COLORS: ['#e53935','#fb8c00','#fdd835','#43a047','#1e88e5','#8e24aa','#00acc1','#f06292','#4db6ac','#ff7043'],
+  FREQS: [261.63,293.66,329.63,349.23,392.00,440.00,493.88,523.25],
+  RING_SLOTS: 8,
+  RING_NOTE_MAP: [0,1,2,3,4,5,6,-1],
+  NOTE_Y_OFFSET: [80,72,64,56,48,40,32] // C=80..B=32 (staffTop offsets, LS=8)
+};
+
+let sharedAudio = null;
+function getAudio() {
+  if (!sharedAudio) sharedAudio = new (window.AudioContext || window.webkitAudioContext)();
+  return sharedAudio;
+}
+function playTone(ni, dur=1.3) {
+  const ac = getAudio(); ac.resume();
+  const f = SHARED.FREQS[Math.round(ni) % 8];
+  [f, f*2].forEach((freq, i) => {
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = i===0 ? 'triangle' : 'sine'; o.frequency.value = freq;
+    o.connect(g); g.connect(ac.destination);
+    g.gain.setValueAtTime(i===0?0.35:0.1, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime+(i===0?dur:dur*0.5));
+    o.start(); o.stop(ac.currentTime+dur);
+  });
+}
+function playShot() {
+  const ac = getAudio(); ac.resume(); const now = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type='sawtooth'; o.frequency.setValueAtTime(220,now); o.frequency.exponentialRampToValueAtTime(55,now+0.18);
+  o.connect(g); g.connect(ac.destination);
+  g.gain.setValueAtTime(0.28,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.2);
+  o.start(); o.stop(now+0.2);
+}
+function playHitSound() {
+  const ac = getAudio(); ac.resume(); const now = ac.currentTime;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type='sine'; o.frequency.value=600; o.connect(g); g.connect(ac.destination);
+  g.gain.setValueAtTime(0.18,now); g.gain.exponentialRampToValueAtTime(0.001,now+0.12);
+  o.start(); o.stop(now+0.12);
+}
+
+function lightenColor(hex, amt) {
+  const n = parseInt(hex.replace('#',''),16);
+  return `rgb(${Math.min(255,(n>>16)+amt)},${Math.min(255,((n>>8)&255)+amt)},${Math.min(255,(n&255)+amt)})`;
+}
+function darkenColor(hex, amt) {
+  const n = parseInt(hex.replace('#',''),16);
+  return `rgb(${Math.max(0,(n>>16)-amt)},${Math.max(0,((n>>8)&255)-amt)},${Math.max(0,(n&255)-amt)})`;
+}
+function hexToRgbStr(hex) {
+  const n = parseInt(hex.replace('#',''),16);
+  return `${(n>>16)&255},${(n>>8)&255},${n&255}`;
+}
+
+// Shared SVG staff renderer
+function renderStaffSVG(notes, selectedNote, pendingSwapNote, gamePhase, onNoteClick) {
+  const container = document.createElement('div');
+  if (notes.length === 0) {
+    container.innerHTML = '<div style="color:#555;font-size:10px;text-align:center;padding:10px;font-style:italic">Запиши ноти...</div>';
+    return container;
+  }
+  const staffW = 160, LS = 7, staffTop = 12, notesPerLine = 5;
+  const NOTE_Y = SHARED.NOTE_Y_OFFSET.map(v => Math.round(v * LS/8)); // scale to LS=7
+  const rows = Math.ceil(notes.length / notesPerLine);
+
+  for (let row = 0; row < rows; row++) {
+    const svgH = staffTop + 7*LS*2 + 14; // plenty of room
+    const svg = document.createElementNS('http://www.w3.org/2000/svg','svg');
+    svg.setAttribute('width', staffW); svg.setAttribute('height', svgH);
+    svg.style.cssText = 'display:block;margin:3px 0';
+    // Staff lines
+    for (let l=0; l<5; l++) {
+      const y = staffTop + l*LS*2;
+      const ln = document.createElementNS('http://www.w3.org/2000/svg','line');
+      ln.setAttribute('x1','13'); ln.setAttribute('x2',staffW-2);
+      ln.setAttribute('y1',y); ln.setAttribute('y2',y);
+      ln.setAttribute('stroke','rgba(255,255,255,0.45)'); ln.setAttribute('stroke-width','0.8');
+      svg.appendChild(ln);
+    }
+    // Clef
+    const clef = document.createElementNS('http://www.w3.org/2000/svg','text');
+    clef.setAttribute('x','0'); clef.setAttribute('y', staffTop+LS*2*4+5);
+    clef.setAttribute('fill','rgba(255,255,200,0.85)'); clef.setAttribute('font-size','28');
+    clef.setAttribute('font-family','serif'); clef.textContent='𝄞';
+    svg.appendChild(clef);
+    // Notes
+    const rowNotes = notes.slice(row*notesPerLine, (row+1)*notesPerLine);
+    const noteStartX = 18, noteStepX = (staffW-noteStartX-6)/notesPerLine;
+    rowNotes.forEach((ni, j) => {
+      const absIdx = row*notesPerLine+j;
+      const isSel = absIdx===selectedNote;
+      const isPend = pendingSwapNote>=0 && gamePhase==='swap';
+      const color = isSel ? '#ffb300' : (isPend ? '#ff7043' : SHARED.NOTE_COLORS[ni%7]);
+      const noteY = staffTop + NOTE_Y[ni%7];
+      const noteX = noteStartX + j*noteStepX;
+      // Ledger for C
+      if (ni%7===0) {
+        const led=document.createElementNS('http://www.w3.org/2000/svg','line');
+        led.setAttribute('x1',noteX-4); led.setAttribute('x2',noteX+13);
+        led.setAttribute('y1',noteY); led.setAttribute('y2',noteY);
+        led.setAttribute('stroke','rgba(255,255,255,0.6)'); led.setAttribute('stroke-width','1');
+        svg.appendChild(led);
+      }
+      // Stem up
+      const stm=document.createElementNS('http://www.w3.org/2000/svg','line');
+      stm.setAttribute('x1',noteX+5); stm.setAttribute('x2',noteX+5);
+      stm.setAttribute('y1',noteY); stm.setAttribute('y2',noteY-LS*3);
+      stm.setAttribute('stroke',color); stm.setAttribute('stroke-width','1.4');
+      svg.appendChild(stm);
+      // Head
+      const head=document.createElementNS('http://www.w3.org/2000/svg','ellipse');
+      head.setAttribute('cx',noteX+3); head.setAttribute('cy',noteY);
+      head.setAttribute('rx','5'); head.setAttribute('ry','3.5');
+      head.setAttribute('fill',color);
+      head.setAttribute('transform',`rotate(-15,${noteX+3},${noteY})`);
+      head.style.cursor='pointer';
+      head.addEventListener('click',()=>onNoteClick(absIdx));
+      head.addEventListener('touchend',(e)=>{e.preventDefault();onNoteClick(absIdx);});
+      svg.appendChild(head);
+      // Selection ring
+      if (isSel) {
+        const r=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        r.setAttribute('cx',noteX+3); r.setAttribute('cy',noteY);
+        r.setAttribute('r','8'); r.setAttribute('fill','none');
+        r.setAttribute('stroke','#ffb300'); r.setAttribute('stroke-width','1.6');
+        svg.appendChild(r);
+      }
+      // Pending ring
+      if (pendingSwapNote>=0 && !isSel) {
+        const pc=SHARED.NOTE_COLORS[pendingSwapNote%7];
+        const pr=document.createElementNS('http://www.w3.org/2000/svg','circle');
+        pr.setAttribute('cx',noteX+3); pr.setAttribute('cy',noteY);
+        pr.setAttribute('r','9'); pr.setAttribute('fill','none');
+        pr.setAttribute('stroke',pc); pr.setAttribute('stroke-width','1.1');
+        pr.setAttribute('stroke-dasharray','3 3');
+        svg.appendChild(pr);
+      }
+      // Bulgarian label
+      const lbl=document.createElementNS('http://www.w3.org/2000/svg','text');
+      lbl.setAttribute('x',noteX+3); lbl.setAttribute('y',svgH-2);
+      lbl.setAttribute('fill',`rgba(${hexToRgbStr(SHARED.NOTE_COLORS[ni%7])},0.85)`);
+      lbl.setAttribute('font-size','7'); lbl.setAttribute('text-anchor','middle');
+      lbl.textContent=SHARED.NOTES_BG[ni%7];
+      svg.appendChild(lbl);
+    });
+    container.appendChild(svg);
+  }
+  return container;
+}
+
+// ═══════════════════════════════════════════════════════════
+// AUTOMATIC DEVICE DETECTION
+// ═══════════════════════════════════════════════════════════
+function isMobileDevice() {
+  const touchFirst = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+  const narrowScreen = window.innerWidth <= 1024;
+  return touchFirst || narrowScreen;
+}
+
+function launchGame() {
+  document.getElementById('startScreen').style.display='none';
+  if (isMobileDevice()) {
+    document.getElementById('mobileGame').style.display='flex';
+    initMobile();
+  } else {
+    document.getElementById('desktopGame').style.display='block';
+    initDesktop();
+  }
+}
+
+// Show splash briefly then auto-launch
+setTimeout(launchGame, 800);
+
+// Back buttons reload the page so detection runs fresh
+document.getElementById('dBackBtn').addEventListener('click', () => {
+  if (dState.rafId) cancelAnimationFrame(dState.rafId);
+  location.reload();
+});
+document.getElementById('mobileBackBtn').addEventListener('click', () => {
+  if (mState.rafId) cancelAnimationFrame(mState.rafId);
+  location.reload();
+});
+
+// Warn on drastic resize (desktop only)
+let _resizeWarn = null;
+window.addEventListener('resize', () => {
+  clearTimeout(_resizeWarn);
+  _resizeWarn = setTimeout(() => {
+    const nowMobile = isMobileDevice();
+    const desktopVisible = document.getElementById('desktopGame').style.display === 'block';
+    const mobileVisible = document.getElementById('mobileGame').style.display === 'flex';
+    if ((desktopVisible && nowMobile) || (mobileVisible && !nowMobile)) {
+      const msg = document.createElement('div');
+      msg.style.cssText='position:fixed;inset:0;z-index:9999;background:rgba(5,15,5,0.92);display:flex;align-items:center;justify-content:center;color:#ffd54f;font-size:clamp(14px,3vw,20px);text-align:center;padding:24px;font-family:Georgia,serif;';
+      msg.innerHTML='Размерът на прозореца се е променил значително.<br><br><button onclick="location.reload()" style="margin-top:16px;padding:10px 28px;font-size:16px;cursor:pointer;background:#1a4a1a;color:#ffd54f;border:1px solid #ffd54f;border-radius:6px;">Презареди</button>';
+      document.body.appendChild(msg);
+    }
+  }, 500);
+});
+
+// ═══════════════════════════════════════════════════════════
+// DESKTOP GAME — complete v8 logic (all IDs prefixed with 'd')
+// ═══════════════════════════════════════════════════════════
+const dState = {
+  balls:[], projectile:null, cannon:{angle:-Math.PI/2,loaded:null},
+  notes:[], swapsLeft:3, swapsUsed:0, selectedNote:-1, pendingSwapNote:-1,
+  dragBall:null, dragX:0, dragY:0, swapBall:null, mouseX:0, mouseY:0,
+  particles:[], gamePhase:'play', rafId:null, shotAttemptsLeft:3
+};
+let dW=0, dH=0, dCtx=null;
+let dRingRotation=0;
+const D_RING_ROT = 0.0036;
+let dRingFlash = new Array(8).fill(0);
+let dSmokes=[];
+
+function initDesktop() {
+  const canvas = document.getElementById('dCanvas');
+  dCtx = canvas.getContext('2d');
+  const wrap = document.getElementById('dGameWrap');
+  function dResize() { dW=canvas.width=wrap.clientWidth; dH=canvas.height=wrap.clientHeight; dBuildPiano(); }
+  dResize();
+  window.addEventListener('resize', dResize);
+  dInitBalls(); dBuildFence(); dBuildPiano(); dUpdateStaff(); dLoop();
+  dSetupInput();
+  document.getElementById('dPlayBtn').onclick = () => {
+    getAudio().resume();
+    if (!dState.notes.length) { dShowMsg('Запиши поне 1 нота!'); return; }
+    dPlayMode=true; dPlayIdx=0;
+    dShowMsg('🎹 Изсвири мелодията!',3000);
+    playTone(dState.notes[0]%7,0.9);
+  };
+  document.getElementById('dLoadBtn').onclick = () => {
+    if (dState.gamePhase!=='swap') return;
+    if(dState.shotAttemptsLeft<=0){dShowMsg('❌ Изчерпа 3-те опита!'); setTimeout(()=>dEnterPiano(),1200); return;}
+    if (dCurrentDrag3D>=0 && !dState.cannon.loaded && dState.swapsLeft>0) {
+      dState.cannon.loaded={color:SHARED.NOTE_COLORS[dCurrentDrag3D],noteIdx:dCurrentDrag3D};
+      dState.swapBall=dCurrentDrag3D;
+      document.getElementById('dOverlay3d').style.display='none';
+      dShowMsg('✅ Заредено! Прицели се в дупката → изстрел!');
+    }
+  };
+  document.getElementById('dCloseOverlay').onclick = () => { document.getElementById('dOverlay3d').style.display='none'; };
+}
+let dPlayMode=false, dPlayIdx=0, dCurrentDrag3D=-1;
+function dInitBalls() {
+  dState.balls=[];
+  for (let i=0;i<9;i++) {
+    const spd=1.2+Math.random()*1.4, ang=Math.random()*Math.PI*2;
+    dState.balls.push({id:i,color:SHARED.BALL_COLORS[i%10],noteIdx:i%7,
+      x:30+Math.random()*(dW-60),y:80+Math.random()*(dH-170),
+      vx:Math.cos(ang)*spd,vy:Math.sin(ang)*spd,r:15,grabbed:false});
+  }
+}
+function dGetCannon() { return {x:dW*0.5,y:dH-80}; }
+function dGetRing()   { return {x:dW*0.5,y:dH*0.2}; }
+const dRingR=100, dHoleR=22;
+function dGetSlotRaw(px,py) {
+  const rp=dGetRing(); const dx=px-rp.x,dy=py-rp.y;
+  let a=Math.atan2(dy,dx);
+  let rel=((a-(dRingRotation-Math.PI/2))%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+  return Math.floor(rel/(Math.PI*2)*8);
+}
+function dUpdateBalls() {
+  const top=55,bot=dH-90,left=15,right=dW-15;
+  dState.balls.forEach(b=>{
+    if(b.grabbed) return;
+    b.x+=b.vx; b.y+=b.vy;
+    if(b.x-b.r<left){b.x=left+b.r;b.vx=Math.abs(b.vx)*0.95;}
+    if(b.x+b.r>right){b.x=right-b.r;b.vx=-Math.abs(b.vx)*0.95;}
+    if(b.y-b.r<top){b.y=top+b.r;b.vy=Math.abs(b.vy)*0.95;}
+    if(b.y+b.r>bot){b.y=bot-b.r;b.vy=-Math.abs(b.vy)*0.95;}
+    b.vx+=(Math.random()-.5)*.04; b.vy+=(Math.random()-.5)*.04;
+    const s=Math.sqrt(b.vx*b.vx+b.vy*b.vy);
+    if(s>2.5){b.vx*=2.5/s;b.vy*=2.5/s;} if(s<0.5){b.vx*=1.05;b.vy*=1.05;}
+  });
+}
+function dUpdateProjectile() {
+  if(!dState.projectile) return;
+  const p=dState.projectile;
+  if(!p.trail) p.trail=[];
+  p.trail.push({x:p.x,y:p.y}); if(p.trail.length>14) p.trail.shift();
+  p.vy+=0.2; p.vx*=0.999; p.x+=p.vx; p.y+=p.vy;
+  const rp=dGetRing();
+  function dist(px,py){const d=px-rp.x,e=py-rp.y;return Math.sqrt(d*d+e*e);}
+  const d=dist(p.x,p.y);
+  const inZone=(d>=dHoleR-p.r)&&(d<=dRingR+p.r+4);
+  if(inZone){
+    const slot=dGetSlotRaw(p.x,p.y);
+    const ni=SHARED.RING_NOTE_MAP[slot];
+    if(ni===-1){
+      if(dState.gamePhase==='swap'&&p.isSwapBall){
+        if(dState.pendingSwapNote<0&&dState.swapsLeft>0){
+          playHitSound(); dSpawnP(p.x,p.y,SHARED.NOTE_COLORS[p.noteIdx],14); dSpawnP(p.x,p.y,'#ffcc00',8);
+          dState.pendingSwapNote=p.noteIdx; playTone(p.noteIdx,.8);
+          dShowPending(p.noteIdx);
+          dShowMsg(`✅ Вкарана: ${SHARED.NOTES_BG[p.noteIdx]}! Кликни нота.`,3500);
+          dState.swapsUsed++; dMarkUsed(p.noteIdx); dUpdateStaff();
+        }
+        dState.projectile=null; return;
+      } else { if(d<dHoleR+2){dState.projectile=null;return;} }
+    } else {
+      if(d>=dHoleR+4&&d<=dRingR+p.r){
+        dRingFlash[slot]=1.0; playTone(ni); dSpawnP(p.x,p.y,SHARED.NOTE_COLORS[ni],14);
+        if(!p.isSwapBall){ dState.notes.push(ni); dShowMsg(`🎵 ${SHARED.NOTES_BG[ni]} записана!`); dUpdateStaff(); }
+        dState.projectile=null; return;
+      }
+    }
+  }
+  if(d<dHoleR-4&&dState.gamePhase==='swap'&&p.isSwapBall){
+    if(dState.pendingSwapNote<0&&dState.swapsLeft>0){
+      playHitSound(); dSpawnP(p.x,p.y,SHARED.NOTE_COLORS[p.noteIdx],14); dSpawnP(p.x,p.y,'#ffcc00',8);
+      dState.pendingSwapNote=p.noteIdx; playTone(p.noteIdx,.8);
+      dShowPending(p.noteIdx);
+      dShowMsg(`✅ Вкарана: ${SHARED.NOTES_BG[p.noteIdx]}! Кликни нота.`,3500);
+      dState.swapsUsed++; dMarkUsed(p.noteIdx); dUpdateStaff();
+    }
+    dState.projectile=null; return;
+  }
+  if(p.y>dH-70){p.vy*=-.4;p.vx*=.65;p.y=dH-70;if(Math.abs(p.vy)<0.5)dState.projectile=null;}
+  if(p.x<-40||p.x>dW+40||p.y>dH+50) dState.projectile=null;
+}
+function dSpawnP(x,y,color,n){
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1.5+Math.random()*3;
+    dState.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:3+Math.random()*4,color,life:1,decay:.04+Math.random()*.04});}
+}
+function dSpawnSmoke(x,y){
+  for(let i=0;i<4;i++) dSmokes.push({x,y,vx:(Math.random()-.5)*1.5,vy:-1-Math.random()*2,r:5+Math.random()*7,life:1,decay:.028});
+}
+let dMsgT=null;
+function dShowMsg(txt,dur=2200){
+  const m=document.getElementById('dMessage'); m.textContent=txt; m.style.display='block';
+  if(dMsgT) clearTimeout(dMsgT);
+  dMsgT=setTimeout(()=>m.style.display='none',dur);
+}
+function dShowPending(ni){
+  const b=document.getElementById('dPendingBanner');
+  if(ni<0){b.style.display='none';return;}
+  b.textContent=`🎵 Вкарана: ${SHARED.NOTES_BG[ni]} — кликни нота за замяна!`;
+  b.style.display='block';
+}
+function dMarkUsed(ni){
+  document.querySelectorAll('.dFenceBall').forEach(b=>{if(parseInt(b.dataset.note)===ni) b.classList.add('dUsed');});
+}
+function dEnterSwap(){
+  if(dState.gamePhase==='swap') return;
+  dState.gamePhase='swap'; dState.pendingSwapNote=-1;
+  dState.shotAttemptsLeft=3; dState.swapsLeft=3; dState.swapsUsed=0;
+  document.getElementById('dPhaseBanner').style.display='block';
+  document.querySelectorAll('.dFenceBall').forEach(b=>b.classList.remove('dDisabled'));
+  dUpdateStaff();
+  dShowMsg('🎉 Топчетата свършиха! Фаза СМЯНА.',4000);
+  dRingFlash.fill(0);
+}
+function dEnterPiano(){
+  if(dState.gamePhase==='piano') return;
+  dState.gamePhase='piano';
+  document.getElementById('dPhaseBanner').style.display='none';
+  dShowPending(-1);
+  document.getElementById('dPlayBtn').style.display='block';
+  dUpdateStaff();
+  dShowMsg('🎹 Фаза ПИАНО — натисни ▶ и изсвири мелодията!',4000);
+}
+function dLaunch(){
+  if(!dState.cannon.loaded||dState.projectile) return;
+  if(dState.pendingSwapNote>=0){dShowMsg(`⚠️ Избери нота за ${SHARED.NOTES_BG[dState.pendingSwapNote]}!`);return;}
+  if(dState.gamePhase==='swap'){
+    if(dState.shotAttemptsLeft<=0){
+      dShowMsg('❌ Изчерпа 3-те опита! Преминаваш към пианото...');
+      setTimeout(()=>dEnterPiano(),1200); return;
+    }
+    dState.shotAttemptsLeft--;
+    dUpdateStaff();
+  }
+  const cp=dGetCannon(),a=dState.cannon.angle,bL=52;
+  const mx=cp.x+Math.cos(a)*bL, my=cp.y+Math.sin(a)*bL;
+  const rp=dGetRing(); const dx=rp.x-mx,dy=rp.y-my;
+  const spd=Math.sqrt(dx*dx+dy*dy)*.022+2.5;
+  dState.projectile={x:mx,y:my,vx:Math.cos(a)*spd,vy:Math.sin(a)*spd,r:13,
+    color:dState.cannon.loaded.color,noteIdx:dState.cannon.loaded.noteIdx,
+    isSwapBall:dState.swapBall!==null,trail:[]};
+  dSpawnSmoke(mx,my); playShot();
+  dState.cannon.loaded=null; dState.swapBall=null;
+  if(dState.gamePhase==='swap' && dState.shotAttemptsLeft<=0){
+    setTimeout(()=>{ if(dState.gamePhase==='swap' && dState.pendingSwapNote<0) dEnterPiano(); },3000);
+  }
+}
+function dBuildFence(){
+  const fence=document.getElementById('dBallFence');
+  while(fence.children.length>1) fence.removeChild(fence.lastChild);
+  const row=document.createElement('div'); row.style.cssText='display:flex;flex-wrap:wrap;gap:3px;';
+  for(let i=0;i<7;i++){
+    const b=document.createElement('div');
+    b.className='dFenceBall dDisabled'; b.style.background=SHARED.NOTE_COLORS[i];
+    b.dataset.note=i; b.innerHTML=SHARED.NOTES_BG[i];
+    b.addEventListener('dblclick',()=>dOpen3D(i));
+    b.addEventListener('mousedown',e=>{e.stopPropagation();dLoadFence(i,b);});
+    row.appendChild(b);
+  }
+  fence.appendChild(row);
+}
+function dLoadFence(ni,el){
+  if(dState.gamePhase!=='swap'||dState.cannon.loaded) return;
+  if(dState.shotAttemptsLeft<=0){dShowMsg('❌ Изчерпа 3-те опита!'); setTimeout(()=>dEnterPiano(),1200); return;}
+  if(dState.swapsLeft<=0){dShowMsg('🎵 Смените свършиха!'); return;}
+  if(dState.pendingSwapNote>=0){dShowMsg(`⚠️ Избери нота за ${SHARED.NOTES_BG[dState.pendingSwapNote]}!`);return;}
+  dState.cannon.loaded={color:SHARED.NOTE_COLORS[ni],noteIdx:ni}; dState.swapBall=ni;
+  el.classList.add('dLoaded'); setTimeout(()=>el.classList.remove('dLoaded'),600);
+  dShowMsg(`🎯 ${SHARED.NOTES_BG[ni]} заредена! Прицели се в дупката → изстрел! Опит ${4-dState.shotAttemptsLeft}/3`);
+}
+function dOpen3D(ni){
+  if(dState.gamePhase!=='swap') return;
+  dCurrentDrag3D=ni;
+  const sp=document.getElementById('dSphere3d');
+  sp.style.background=SHARED.NOTE_COLORS[ni];
+  sp.innerHTML=`<div style="text-align:center;pointer-events:none"><div style="font-size:44px;font-weight:bold;color:#fff;text-shadow:0 2px 8px #000">${SHARED.NOTES_BG[ni]}</div></div>`;
+  document.getElementById('dSphereLabel').textContent=`Нота: ${SHARED.NOTES_BG[ni]}`;
+  document.getElementById('dOverlay3d').style.display='flex';
+  let drag3=false,lastX=0,rotY=0;
+  sp.onmousedown=e=>{drag3=true;lastX=e.clientX;};
+  document.onmousemove=e=>{if(!drag3)return;rotY+=(e.clientX-lastX)*1.3;lastX=e.clientX;sp.style.transform=`rotateY(${rotY}deg)`;};
+  document.onmouseup=()=>{drag3=false;};
+}
+function dBuildPiano(){
+  const wrap=document.getElementById('dPianoWrap'); wrap.innerHTML='';
+  const kW=Math.min(50,Math.floor(dW*.55/7));
+  const outer=document.createElement('div');
+  outer.style.cssText='position:relative;display:flex;background:#333;padding:3px 3px 0;border-radius:4px 4px 0 0;box-shadow:0 -2px 8px rgba(0,0,0,.5);';
+  for(let ni=0;ni<7;ni++){
+    const k=document.createElement('div'); k.className='dPianoKey'; k.style.width=kW+'px';
+    k.innerHTML=`<span style="text-align:center">${SHARED.NOTES_BG[ni]}</span>`;
+    k.addEventListener('mousedown',()=>{playTone(ni);k.classList.add('dPressed');dCheckPiano(ni);setTimeout(()=>k.classList.remove('dPressed'),220);});
+    outer.appendChild(k);
+  }
+  const bWrap=document.createElement('div'); bWrap.style.cssText='position:absolute;top:3px;left:3px;width:100%;pointer-events:none;';
+  [0.67,1.67,-1,3.67,4.67,5.67].forEach((pos,i)=>{
+    if(pos<0) return;
+    const bk=document.createElement('div'); bk.className='dPianoKey dBlack';
+    bk.style.cssText=`position:absolute;left:${pos*kW}px;top:0;width:${Math.floor(kW*.56)}px;pointer-events:all;`;
+    bk.addEventListener('mousedown',()=>{playTone(i+.5);});
+    bWrap.appendChild(bk);
+  });
+  outer.appendChild(bWrap); wrap.appendChild(outer);
+}
+function dCheckPiano(ni){
+  if(!dPlayMode) return;
+  const exp=dState.notes[dPlayIdx]%7;
+  if(ni===exp){
+    dPlayIdx++;
+    if(dPlayIdx>=dState.notes.length){
+      dPlayMode=false; dPlayIdx=0;
+      dShowMsg('🎉 Браво! Перфектно!',3500);
+      setTimeout(dShowAutoPlayBtn,600);
+    }
+  } else {dShowMsg(`❌ Грешна нота! Очаква: ${SHARED.NOTES_BG[exp]}`);dPlayIdx=0;}
+}
+function dShowAutoPlayBtn(){
+  let btn=document.getElementById('dAutoPlayBtn');
+  if(!btn){
+    btn=document.createElement('button');
+    btn.id='dAutoPlayBtn';
+    btn.style.cssText='position:absolute;bottom:110px;left:50%;transform:translateX(-50%);padding:14px 32px;background:linear-gradient(135deg,#43a047,#1b5e20);color:#fff;border:none;border-radius:14px;font-size:16px;font-weight:bold;cursor:pointer;box-shadow:0 4px 20px rgba(67,160,71,.55);z-index:20;letter-spacing:.5px;';
+    btn.textContent='🎵 Автоматично изсвирване';
+    btn.addEventListener('click',dAutoPlay);
+    document.getElementById('dGameWrap').appendChild(btn);
+  }
+  btn.style.display='block';
+}
+function dAutoPlay(){
+  if(!dState.notes.length) return;
+  const btn=document.getElementById('dAutoPlayBtn');
+  if(btn) btn.style.display='none';
+  getAudio().resume();
+  let idx=0;
+  function playNext(){
+    if(idx>=dState.notes.length) return;
+    const ni=dState.notes[idx]%7;
+    playTone(ni,0.9);
+    const whites=document.querySelectorAll('#dPianoWrap .dPianoKey:not(.dBlack)');
+    if(whites[ni]){ whites[ni].classList.add('dPressed'); setTimeout(()=>whites[ni].classList.remove('dPressed'),300); }
+    idx++;
+    if(idx<dState.notes.length) setTimeout(playNext,600);
+    else setTimeout(()=>{ if(btn) btn.style.display='block'; },800);
+  }
+  playNext();
+}
+function dUpdateStaff(){
+  const sc=document.getElementById('dStaffContainer'); sc.innerHTML='';
+  if(dState.gamePhase==='swap'){
+    document.getElementById('dSwapCount').textContent=
+      `Опити: ${dState.shotAttemptsLeft}/3` +
+      (dState.pendingSwapNote>=0 ? ' · ↓ кликни нота' : ' · избери топче →');
+  } else {
+    document.getElementById('dSwapCount').textContent='';
+  }
+  const el=renderStaffSVG(dState.notes,dState.selectedNote,dState.pendingSwapNote,dState.gamePhase,(idx)=>{
+    if(dState.gamePhase==='swap'&&dState.pendingSwapNote>=0&&dState.swapsLeft>0){
+      const old=dState.notes[idx]; dState.notes[idx]=dState.pendingSwapNote; dState.swapsLeft--;
+      playTone(dState.pendingSwapNote,.8);
+      dShowMsg(`✅ ${SHARED.NOTES_BG[old]} → ${SHARED.NOTES_BG[dState.pendingSwapNote]} заменена!`,2500);
+      dState.pendingSwapNote=-1; dState.selectedNote=-1; dShowPending(-1); dUpdateStaff();
+      if(dState.swapsLeft<=0) setTimeout(()=>dEnterPiano(),2000);
+    } else if(dState.gamePhase==='swap'){
+      dState.selectedNote=dState.selectedNote===idx?-1:idx; dUpdateStaff();
+    }
+  });
+  sc.appendChild(el);
+}
+
+// Desktop drawing
+function dDrawBG(){
+  const sky=dCtx.createLinearGradient(0,0,0,dH*.72);
+  sky.addColorStop(0,'#050f05'); sky.addColorStop(1,'#0f2e12');
+  dCtx.fillStyle=sky; dCtx.fillRect(0,0,dW,dH);
+  for(let i=0;i<dW;i+=44){dCtx.fillStyle=i%88===0?'#1b5e20':'#2e7d32';dCtx.fillRect(i,dH*.72,44,dH*.28);}
+  dCtx.fillStyle='#1b5e20'; dCtx.fillRect(0,dH-60,dW,60);
+  dCtx.fillStyle='#33691e'; dCtx.fillRect(0,dH-60,dW,3);
+}
+function dDrawBalls(){
+  dState.balls.forEach(b=>{
+    if(b.grabbed) return;
+    const g=dCtx.createRadialGradient(b.x-b.r*.3,b.y-b.r*.35,1,b.x,b.y,b.r);
+    g.addColorStop(0,lightenColor(b.color,55)); g.addColorStop(.65,b.color); g.addColorStop(1,darkenColor(b.color,40));
+    dCtx.beginPath(); dCtx.arc(b.x,b.y,b.r,0,Math.PI*2); dCtx.fillStyle=g; dCtx.fill();
+    dCtx.strokeStyle='rgba(255,255,255,.3)'; dCtx.lineWidth=1.5; dCtx.stroke();
+    dCtx.beginPath(); dCtx.arc(b.x-b.r*.28,b.y-b.r*.3,b.r*.26,0,Math.PI*2);
+    dCtx.fillStyle='rgba(255,255,255,.38)'; dCtx.fill();
+  });
+}
+function dDrawDrag(){
+  if(!dState.dragBall) return;
+  const b=dState.dragBall,g=dCtx.createRadialGradient(dState.dragX-8,dState.dragY-8,1,dState.dragX,dState.dragY,18);
+  g.addColorStop(0,lightenColor(b.color,55)); g.addColorStop(1,b.color);
+  dCtx.beginPath(); dCtx.arc(dState.dragX,dState.dragY,18,0,Math.PI*2); dCtx.fillStyle=g; dCtx.fill();
+  dCtx.strokeStyle='rgba(255,255,255,.7)'; dCtx.lineWidth=2.5; dCtx.stroke();
+  const cp=dGetCannon(),dx=dState.dragX-cp.x,dy=dState.dragY-cp.y;
+  if(Math.sqrt(dx*dx+dy*dy)<60){
+    dCtx.beginPath(); dCtx.arc(cp.x,cp.y-30,20,0,Math.PI*2);
+    dCtx.strokeStyle='rgba(255,220,50,.8)'; dCtx.lineWidth=2; dCtx.setLineDash([5,5]); dCtx.stroke(); dCtx.setLineDash([]);
+    dCtx.fillStyle='rgba(255,220,50,.9)'; dCtx.font='bold 10px Arial';
+    dCtx.textAlign='center'; dCtx.textBaseline='middle'; dCtx.fillText('ЗАРЕДИ',cp.x,cp.y-28);
+  }
+}
+function dDrawRing(){
+  const rp=dGetRing(),cx=rp.x,cy=rp.y,R=dRingR,innerR=dHoleR;
+  dRingRotation+=D_RING_ROT;
+  for(let i=0;i<8;i++){if(dRingFlash[i]>0) dRingFlash[i]=Math.max(0,dRingFlash[i]-.04);}
+  dCtx.save();
+  dCtx.shadowColor='rgba(255,255,200,.35)'; dCtx.shadowBlur=18;
+  dCtx.beginPath(); dCtx.arc(cx,cy,R+5,0,Math.PI*2);
+  dCtx.strokeStyle='rgba(255,255,180,.2)'; dCtx.lineWidth=3; dCtx.stroke(); dCtx.shadowBlur=0;
+  const sA=(Math.PI*2)/8;
+  for(let i=0;i<8;i++){
+    const a1=dRingRotation-Math.PI/2+i*sA, a2=a1+sA, gap=0.028;
+    const ni=SHARED.RING_NOTE_MAP[i];
+    dCtx.beginPath();
+    dCtx.moveTo(cx+Math.cos(a1+gap)*(innerR+2),cy+Math.sin(a1+gap)*(innerR+2));
+    dCtx.arc(cx,cy,innerR+2,a1+gap,a2-gap);
+    dCtx.lineTo(cx+Math.cos(a2-gap)*R,cy+Math.sin(a2-gap)*R);
+    dCtx.arc(cx,cy,R,a2-gap,a1+gap,true); dCtx.closePath();
+    if(ni===-1){dCtx.fillStyle='rgba(10,20,10,.7)';dCtx.fill();dCtx.strokeStyle='#222';dCtx.lineWidth=1;dCtx.stroke();continue;}
+    const fl=dRingFlash[i],mid=(a1+a2)/2;
+    const lg=dCtx.createLinearGradient(cx+Math.cos(mid)*(innerR+2),cy+Math.sin(mid)*(innerR+2),cx+Math.cos(mid)*R,cy+Math.sin(mid)*R);
+    if(fl>0){const fc=SHARED.NOTE_COLORS[ni],nr=parseInt(fc.slice(1,3),16),ng=parseInt(fc.slice(3,5),16),nb=parseInt(fc.slice(5,7),16);
+      lg.addColorStop(0,'rgba(255,255,255,1)');lg.addColorStop(.3,`rgba(${Math.min(255,nr+160)},${Math.min(255,ng+160)},${Math.min(255,nb+160)},1)`);lg.addColorStop(1,`rgba(${nr},${ng},${nb},${fl})`);}
+    else{lg.addColorStop(0,'rgba(255,255,255,.97)');lg.addColorStop(1,'rgba(220,220,220,.9)');}
+    dCtx.fillStyle=lg; dCtx.fill(); dCtx.strokeStyle='#555'; dCtx.lineWidth=1.2; dCtx.stroke();
+  }
+  // black keys
+  [0,1,3,4,5].forEach(slot=>{
+    const a1=dRingRotation-Math.PI/2+(slot+.68)*sA, a2=dRingRotation-Math.PI/2+(slot+1.32)*sA;
+    const bI=innerR+2, bO=innerR+(R-innerR)*.55;
+    dCtx.beginPath(); dCtx.moveTo(cx+Math.cos(a1)*bI,cy+Math.sin(a1)*bI);
+    dCtx.arc(cx,cy,bI,a1,a2); dCtx.lineTo(cx+Math.cos(a2)*bO,cy+Math.sin(a2)*bO);
+    dCtx.arc(cx,cy,bO,a2,a1,true); dCtx.closePath();
+    dCtx.fillStyle='#1a1a1a'; dCtx.fill(); dCtx.strokeStyle='#333'; dCtx.lineWidth=1; dCtx.stroke();
+  });
+  // labels
+  dCtx.save(); dCtx.font='bold 8px Arial'; dCtx.textAlign='center'; dCtx.textBaseline='middle';
+  for(let i=0;i<8;i++){
+    const ni=SHARED.RING_NOTE_MAP[i]; if(ni===-1) continue;
+    const mid=dRingRotation-Math.PI/2+(i+.5)*sA, lr=(innerR+R)*.62;
+    dCtx.fillStyle=dRingFlash[i]>.3?SHARED.NOTE_COLORS[ni]:'rgba(60,60,60,.9)';
+    dCtx.fillText(SHARED.NOTES_BG[ni],cx+Math.cos(mid)*lr,cy+Math.sin(mid)*lr);
+  }
+  dCtx.restore();
+  // hole
+  const hA=dState.gamePhase==='swap';
+  dCtx.beginPath(); dCtx.arc(cx,cy,innerR,0,Math.PI*2);
+  const hg=dCtx.createRadialGradient(cx-5,cy-5,2,cx,cy,innerR);
+  if(hA){hg.addColorStop(0,'#ff6f00');hg.addColorStop(.6,'#e65100');hg.addColorStop(1,'#bf360c');dCtx.shadowColor='rgba(255,100,0,.5)';dCtx.shadowBlur=12;}
+  else{hg.addColorStop(0,'#1565c0');hg.addColorStop(.6,'#0d47a1');hg.addColorStop(1,'#01579b');}
+  dCtx.fillStyle=hg; dCtx.fill(); dCtx.shadowBlur=0;
+  dCtx.strokeStyle=hA?'#ffb300':'#90caf9'; dCtx.lineWidth=2.5; dCtx.stroke();
+  dCtx.fillStyle='rgba(255,255,255,.75)'; dCtx.font='bold 8px Arial'; dCtx.textAlign='center'; dCtx.textBaseline='middle';
+  dCtx.fillText(hA?'СМЯНА':'HOLE',cx,cy); dCtx.restore();
+}
+function dDrawCannon(){
+  const cp=dGetCannon(),cx=cp.x,cy=cp.y,a=dState.cannon.angle;
+  dCtx.save(); dCtx.translate(cx,cy);
+  dCtx.beginPath(); dCtx.ellipse(0,14,44,9,0,0,Math.PI*2); dCtx.fillStyle='rgba(0,0,0,.35)'; dCtx.fill();
+  [-28,28].forEach(wx=>{
+    dCtx.save(); dCtx.translate(wx,10);
+    const wg=dCtx.createRadialGradient(-2,-2,1,0,0,12); wg.addColorStop(0,'#777'); wg.addColorStop(1,'#222');
+    dCtx.beginPath(); dCtx.arc(0,0,12,0,Math.PI*2); dCtx.fillStyle=wg; dCtx.fill();
+    dCtx.strokeStyle='#444'; dCtx.lineWidth=2; dCtx.stroke();
+    for(let s=0;s<4;s++){dCtx.beginPath();dCtx.moveTo(0,0);dCtx.lineTo(Math.cos(s*Math.PI/2)*9,Math.sin(s*Math.PI/2)*9);dCtx.strokeStyle='#555';dCtx.lineWidth=1.5;dCtx.stroke();}
+    dCtx.beginPath();dCtx.arc(0,0,3,0,Math.PI*2);dCtx.fillStyle='#aaa';dCtx.fill(); dCtx.restore();
+  });
+  const bg=dCtx.createLinearGradient(-36,-8,36,10); bg.addColorStop(0,'#fff176');bg.addColorStop(.5,'#f9a825');bg.addColorStop(1,'#e65100');
+  dCtx.beginPath();dCtx.roundRect(-36,-8,72,20,5);dCtx.fillStyle=bg;dCtx.fill();dCtx.strokeStyle='#bf6900';dCtx.lineWidth=1.5;dCtx.stroke();
+  const sg=dCtx.createLinearGradient(-18,-22,18,-2); sg.addColorStop(0,'#64b5f6');sg.addColorStop(1,'#1565c0');
+  dCtx.beginPath();dCtx.roundRect(-18,-22,36,18,4);dCtx.fillStyle=sg;dCtx.fill();dCtx.strokeStyle='#0d47a1';dCtx.lineWidth=1.5;dCtx.stroke();
+  dCtx.beginPath();dCtx.arc(0,-4,5,0,Math.PI*2);dCtx.fillStyle='#ccc';dCtx.fill();dCtx.strokeStyle='#888';dCtx.lineWidth=1.5;dCtx.stroke();
+  dCtx.save(); dCtx.rotate(a+Math.PI/2);
+  const bL=52,bW=14;
+  const barG=dCtx.createLinearGradient(-bW/2,0,bW/2,0); barG.addColorStop(0,'#e65100');barG.addColorStop(.3,'#f9a825');barG.addColorStop(.7,'#fdd835');barG.addColorStop(1,'#bf6900');
+  dCtx.beginPath();dCtx.roundRect(-bW/2,-bL,bW,bL+4,[0,0,4,4]);dCtx.fillStyle=barG;dCtx.fill();dCtx.strokeStyle='#bf6900';dCtx.lineWidth=1.5;dCtx.stroke();
+  [.25,.5,.75].forEach(t=>{const y=-bL+t*bL;dCtx.beginPath();dCtx.rect(-bW/2-1,y-2.5,bW+2,5);const rg=dCtx.createLinearGradient(-bW/2,y,bW/2,y);rg.addColorStop(0,'#1565c0');rg.addColorStop(.5,'#64b5f6');rg.addColorStop(1,'#1565c0');dCtx.fillStyle=rg;dCtx.fill();dCtx.strokeStyle='#0d47a1';dCtx.lineWidth=.8;dCtx.stroke();});
+  if(dState.cannon.loaded){
+    const bg2=dCtx.createRadialGradient(-3,-bL-2,1,0,-bL,12); bg2.addColorStop(0,lightenColor(dState.cannon.loaded.color,50));bg2.addColorStop(1,dState.cannon.loaded.color);
+    dCtx.beginPath();dCtx.arc(0,-bL,12,0,Math.PI*2);dCtx.fillStyle=bg2;dCtx.fill();dCtx.strokeStyle='rgba(255,255,255,.5)';dCtx.lineWidth=2;dCtx.stroke();
+  }
+  dCtx.restore();
+  const tg=dCtx.createRadialGradient(18,-4,1,20,-2,9); tg.addColorStop(0,'#ff8a80');tg.addColorStop(1,'#c62828');
+  dCtx.beginPath();dCtx.arc(20,-2,9,0,Math.PI*2);dCtx.fillStyle=tg;dCtx.fill();dCtx.strokeStyle='#fff';dCtx.lineWidth=1.5;dCtx.stroke();
+  dCtx.fillStyle='rgba(255,255,255,.7)';dCtx.font='bold 7px Arial';dCtx.textAlign='center';dCtx.textBaseline='middle';dCtx.fillText('FIRE',20,-2);
+  dCtx.restore();
+}
+function dDrawAimGuide(){
+  if(!dState.cannon.loaded) return;
+  const cp=dGetCannon(),a=dState.cannon.angle,bL=52;
+  const mx=cp.x+Math.cos(a)*bL,my=cp.y+Math.sin(a)*bL;
+  const rp=dGetRing(),dx=rp.x-mx,dy=rp.y-my;
+  const spd=Math.sqrt(dx*dx+dy*dy)*.022+2.5;
+  let vx=Math.cos(a)*spd,vy=Math.sin(a)*spd,px=mx,py=my;
+  dCtx.save();dCtx.strokeStyle='rgba(255,255,100,.2)';dCtx.lineWidth=1.5;dCtx.setLineDash([5,8]);
+  dCtx.beginPath();dCtx.moveTo(px,py);
+  for(let i=0;i<50;i++){vy+=.2;px+=vx;py+=vy;if(i%2===0)dCtx.lineTo(px,py);}
+  dCtx.stroke();dCtx.setLineDash([]);dCtx.restore();
+}
+function dDrawProj(){
+  if(!dState.projectile) return;
+  const p=dState.projectile;
+  if(p.trail) p.trail.forEach((pt,i)=>{const al=i/p.trail.length*.45;dCtx.beginPath();dCtx.arc(pt.x,pt.y,p.r*(i/p.trail.length)*.7,0,Math.PI*2);dCtx.fillStyle=`rgba(255,255,255,${al})`;dCtx.fill();});
+  const g=dCtx.createRadialGradient(p.x-4,p.y-4,1,p.x,p.y,p.r); g.addColorStop(0,lightenColor(p.color,60));g.addColorStop(1,p.color);
+  dCtx.beginPath();dCtx.arc(p.x,p.y,p.r,0,Math.PI*2);dCtx.fillStyle=g;dCtx.fill();dCtx.strokeStyle='rgba(255,255,255,.55)';dCtx.lineWidth=2;dCtx.stroke();
+}
+function dDrawParts(){
+  dState.particles=dState.particles.filter(p=>p.life>0);
+  dState.particles.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.1;p.life-=p.decay;p.r*=.97;
+    dCtx.beginPath();dCtx.arc(p.x,p.y,p.r,0,Math.PI*2);dCtx.fillStyle=`rgba(${hexToRgbStr(p.color)},${p.life})`;dCtx.fill();});
+  dSmokes=dSmokes.filter(s=>s.life>0);
+  dSmokes.forEach(s=>{s.x+=s.vx;s.y+=s.vy;s.r*=1.04;s.life-=s.decay;
+    dCtx.beginPath();dCtx.arc(s.x,s.y,s.r,0,Math.PI*2);dCtx.fillStyle=`rgba(200,200,180,${s.life*.18})`;dCtx.fill();});
+}
+function dLoop(){
+  dCtx.clearRect(0,0,dW,dH);
+  dDrawBG(); dUpdateBalls(); dDrawBalls(); dDrawParts();
+  dDrawAimGuide(); dDrawRing(); dDrawCannon();
+  dUpdateProjectile(); dDrawProj(); dDrawDrag();
+  dState.rafId=requestAnimationFrame(dLoop);
+}
+function dSetupInput(){
+  const wrap=document.getElementById('dGameWrap');
+  wrap.addEventListener('mousemove',e=>{
+    const r=document.getElementById('dCanvas').getBoundingClientRect();
+    dState.mouseX=e.clientX-r.left; dState.mouseY=e.clientY-r.top;
+    const cp=dGetCannon(),dx=dState.mouseX-cp.x,dy=dState.mouseY-cp.y;
+    let a=Math.atan2(dy,dx); a=Math.max(-Math.PI+.1,Math.min(-.08,a)); dState.cannon.angle=a;
+    if(dState.dragBall){dState.dragX=dState.mouseX;dState.dragY=dState.mouseY;}
+  });
+  wrap.addEventListener('mousedown',e=>{
+    getAudio().resume();
+    const r=document.getElementById('dCanvas').getBoundingClientRect();
+    const mx=e.clientX-r.left,my=e.clientY-r.top;
+    if(!dState.cannon.loaded){
+      for(let b of dState.balls){if(b.grabbed) continue;const dx=mx-b.x,dy=my-b.y;if(Math.sqrt(dx*dx+dy*dy)<b.r+8){dState.dragBall=b;dState.dragX=mx;dState.dragY=my;b.grabbed=true;break;}}
+    }
+  });
+  wrap.addEventListener('mouseup',e=>{
+    const r=document.getElementById('dCanvas').getBoundingClientRect();
+    const mx=e.clientX-r.left,my=e.clientY-r.top;
+    if(dState.dragBall){
+      const cp=dGetCannon(),dx=mx-cp.x,dy=my-cp.y;
+      if(Math.sqrt(dx*dx+dy*dy)<65&&!dState.cannon.loaded){
+        dState.cannon.loaded={color:dState.dragBall.color,noteIdx:dState.dragBall.noteIdx};
+        dState.swapBall=null; dState.balls=dState.balls.filter(b=>b!==dState.dragBall);
+        dSpawnP(cp.x,cp.y-20,dState.cannon.loaded.color,6);
+        dShowMsg('✅ Заредено! Клик → изстрел!');
+        if(dState.balls.length===0&&dState.gamePhase==='play'){
+          setTimeout(()=>{if(dState.balls.length===0&&!dState.cannon.loaded) dEnterSwap();},2500);
+        }
+      } else { dState.dragBall.grabbed=false; }
+      dState.dragBall=null; return;
+    }
+    dLaunch();
+  });
+  ['touchstart','touchmove','touchend'].forEach((ev,i)=>{
+    wrap.addEventListener(ev,e=>{e.preventDefault();const t=i===2?e.changedTouches[0]:e.touches[0];
+      wrap.dispatchEvent(new MouseEvent(['mousedown','mousemove','mouseup'][i],{clientX:t.clientX,clientY:t.clientY}));},{passive:false});
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// MOBILE GAME
+// ═══════════════════════════════════════════════════════════
+const mState = {
+  balls:[], projectile:null,
+  cannon:{angle:-Math.PI/2, loaded:null, isSwap:false},
+  notes:[], swapsLeft:3, swapsUsed:0,
+  shotAttemptsLeft: 3,   // всеки изстрел в swap фаза намалява с 1
+  selectedNote:-1, pendingSwapNote:-1,
+  selectedBall:null,
+  particles:[],
+  gamePhase:'play', // 'play' | 'swap' | 'piano'
+  rafId:null
+};
+let mRW=0, mRH=0, mFW=0, mFH=0;
+let mRingCtx=null, mFieldCtx=null;
+let mRingRot=0;
+const M_RING_ROT=0.0058; // +35% от изходните 0.0036, плавна ротация
+let mRingFlash=new Array(8).fill(0);
+let mSmokes=[];
+let mAimInterval=null;
+let mAimDir=0;
+
+function initMobile(){
+  const ringCanvas=document.getElementById('mobileRingCanvas');
+  const fieldCanvas=document.getElementById('mobileFieldCanvas');
+  mRingCtx=ringCanvas.getContext('2d');
+  mFieldCtx=fieldCanvas.getContext('2d');
+
+  function mResize(){
+    const rl=document.getElementById('mobileLayout');
+    const topH=document.getElementById('mobileTopBar').offsetHeight;
+    const aimH=document.getElementById('mobileAimBar').offsetHeight;
+    const botH=document.getElementById('mobileBottomRow').offsetHeight;
+    const totalH=rl.clientHeight;
+    const ringSize=Math.min(rl.clientWidth, Math.floor((totalH-topH-aimH-botH)*.38),180);
+    mRW=ringCanvas.width=ringSize; mRH=ringCanvas.height=ringSize;
+    mFW=fieldCanvas.width=rl.clientWidth;
+    mFH=fieldCanvas.height=Math.max(100, totalH-topH-ringSize-aimH-botH-8);
+    mInitBalls();
+    mBuildPiano();
+    mUpdateStaff();
+  }
+  mResize();
+  window.addEventListener('resize', mResize);
+
+  // Aim buttons
+  document.getElementById('mAimLeft').addEventListener('touchstart',e=>{e.preventDefault();mAimDir=-1;mStartAim();});
+  document.getElementById('mAimLeft').addEventListener('mousedown',()=>{mAimDir=-1;mStartAim();});
+  document.getElementById('mAimRight').addEventListener('touchstart',e=>{e.preventDefault();mAimDir=1;mStartAim();});
+  document.getElementById('mAimRight').addEventListener('mousedown',()=>{mAimDir=1;mStartAim();});
+  ['touchend','mouseup'].forEach(ev=>{
+    document.getElementById('mAimLeft').addEventListener(ev,mStopAim);
+    document.getElementById('mAimRight').addEventListener(ev,mStopAim);
+  });
+
+  // Fire button
+  document.getElementById('mobileFireBtn').addEventListener('click',()=>{ getAudio().resume(); mLaunch(); });
+  document.getElementById('mobileFireBtn').addEventListener('touchend',e=>{e.preventDefault();getAudio().resume();mLaunch();});
+
+  // ── Field: touch drag & drop ──────────────────────────────────────
+  let mDragBall = null;
+
+  function getFieldXY(clientX, clientY){
+    const r = fieldCanvas.getBoundingClientRect();
+    return { x: clientX - r.left, y: clientY - r.top };
+  }
+  function findBallAt(fx, fy){
+    for(let b of mState.balls){
+      const dx=fx-b.x, dy=fy-b.y;
+      if(Math.sqrt(dx*dx+dy*dy) < b.r + 14) return b;
+    }
+    return null;
+  }
+  function tryLoadBall(fx, fy){
+    if(!mDragBall) return;
+    const cp = mGetCannon();
+    const dist = Math.sqrt((fx-cp.x)**2+(fy-cp.y)**2);
+    if(dist < 65 && !mState.cannon.loaded){
+      mState.cannon.loaded = {color:mDragBall.color, noteIdx:mDragBall.noteIdx};
+      mState.cannon.isSwap = false;
+      mState.balls = mState.balls.filter(b=>b!==mDragBall);
+      mSpawnP(cp.x, cp.y-20, mState.cannon.loaded.color, 8);
+      mShowMsg('✅ Заредено! Натисни 🔥 ИЗСТРЕЛ', 2000);
+      mState.selectedBall = null;
+      mDragBall = null;
+      if(mState.balls.length===0 && mState.gamePhase==='play'){
+        setTimeout(()=>{if(mState.balls.length===0&&!mState.cannon.loaded) mEnterSwap();},2000);
+      }
+    } else {
+      // Release back to physics
+      mDragBall.dragging = false; mDragBall.selected = false;
+      mDragBall.vx = (mDragBall.savedVx||0)*.5 + (Math.random()-.5)*.8;
+      mDragBall.vy = (mDragBall.savedVy||0)*.5 + (Math.random()-.5)*.8;
+      mState.selectedBall = null; mDragBall = null;
+    }
+  }
+
+  fieldCanvas.addEventListener('touchstart', e=>{
+    e.preventDefault();
+    getAudio().resume();
+    if(mState.cannon.loaded || mState.projectile) return;
+    const t = e.touches[0];
+    const {x,y} = getFieldXY(t.clientX, t.clientY);
+    const b = findBallAt(x, y);
+    if(b){
+      mDragBall = b; b.dragging = true; b.selected = true; mState.selectedBall = b;
+      b.savedVx = b.vx; b.savedVy = b.vy; b.vx = 0; b.vy = 0;
+      mState.balls.forEach(bb=>{ if(bb!==b){bb.selected=false;bb.dragging=false;} });
+      mShowMsg(`🎯 ${SHARED.NOTES_BG[b.noteIdx]} — тащи до оръдието`, 1500);
+    }
+  }, {passive:false});
+
+  fieldCanvas.addEventListener('touchmove', e=>{
+    e.preventDefault();
+    if(!mDragBall) return;
+    const t = e.touches[0];
+    const {x,y} = getFieldXY(t.clientX, t.clientY);
+    mDragBall.x = x; mDragBall.y = y;
+  }, {passive:false});
+
+  fieldCanvas.addEventListener('touchend', e=>{
+    e.preventDefault();
+    if(!mDragBall) return;
+    const t = e.changedTouches[0];
+    const {x,y} = getFieldXY(t.clientX, t.clientY);
+    tryLoadBall(x, y);
+  }, {passive:false});
+
+  // Mouse fallback
+  let mMouseDrag = false;
+  fieldCanvas.addEventListener('mousedown', e=>{
+    getAudio().resume();
+    if(mState.cannon.loaded||mState.projectile) return;
+    const r=fieldCanvas.getBoundingClientRect();
+    const b=findBallAt(e.clientX-r.left, e.clientY-r.top);
+    if(b){ mDragBall=b; b.dragging=true; b.selected=true; mState.selectedBall=b; b.savedVx=b.vx; b.savedVy=b.vy; b.vx=0; b.vy=0; mState.balls.forEach(bb=>{if(bb!==b){bb.selected=false;bb.dragging=false;}}); mMouseDrag=true; }
+  });
+  fieldCanvas.addEventListener('mousemove', e=>{
+    if(!mDragBall||!mMouseDrag) return;
+    const r=fieldCanvas.getBoundingClientRect(); mDragBall.x=e.clientX-r.left; mDragBall.y=e.clientY-r.top;
+  });
+  fieldCanvas.addEventListener('mouseup', e=>{
+    if(!mDragBall||!mMouseDrag){mMouseDrag=false;return;}
+    const r=fieldCanvas.getBoundingClientRect(); tryLoadBall(e.clientX-r.left, e.clientY-r.top); mMouseDrag=false;
+  });
+
+  // Skip swap → go to piano
+  document.getElementById('mobileSkipSwap').addEventListener('click',()=>{ mEnterPiano(); });
+  document.getElementById('mobileSkipSwap').addEventListener('touchend',e=>{ e.preventDefault(); mEnterPiano(); });
+
+  // Play button
+  document.getElementById('mobilePlayBtn').addEventListener('click',()=>{
+    getAudio().resume();
+    if(!mState.notes.length){mShowMsg('Запиши поне 1 нота!');return;}
+    mPlayMode=true; mPlayIdx=0; mShowMsg('🎹 Изсвири на пианото!',3000); playTone(mState.notes[0]%7,.9);
+  });
+  document.getElementById('mobilePlayBtn').addEventListener('touchend',e=>{
+    e.preventDefault(); getAudio().resume();
+    if(!mState.notes.length){mShowMsg('Запиши поне 1 нота!');return;}
+    mPlayMode=true; mPlayIdx=0; mShowMsg('🎹 Изсвири на пианото!',3000); playTone(mState.notes[0]%7,.9);
+  });
+
+  mLoop();
+}
+let mPlayMode=false, mPlayIdx=0;
+
+function mStartAim(){
+  if(mAimInterval) clearInterval(mAimInterval);
+  mAimInterval=setInterval(()=>{
+    mState.cannon.angle+=mAimDir*.025;
+    mState.cannon.angle=Math.max(-Math.PI+.05,Math.min(-.05,mState.cannon.angle));
+  },16);
+}
+function mStopAim(){ clearInterval(mAimInterval); mAimInterval=null; mAimDir=0; }
+
+function mInitBalls(){
+  mState.balls=[];
+  const top=30,bot=mFH-30,left=20,right=mFW-20;
+  for(let i=0;i<7;i++){
+    const spd=1.8+Math.random()*1.2, ang=Math.random()*Math.PI*2; // +40% faster
+    mState.balls.push({id:i,color:SHARED.BALL_COLORS[i%10],noteIdx:i%7,
+      x:left+Math.random()*(right-left), y:top+Math.random()*(bot-top),
+      vx:Math.cos(ang)*spd, vy:Math.sin(ang)*spd, r:20,
+      selected:false, dragging:false, savedVx:0, savedVy:0});
+  }
+}
+
+function mFieldTap(tx,ty){
+  // Legacy tap fallback — drag system now handles ball pickup.
+  // This handles: tap directly ON cannon when a ball is already selected (keyboard shortcut feel).
+  getAudio().resume();
+  const cp=mGetCannon();
+  const cdx=tx-cp.x,cdy=ty-cp.y;
+  if(Math.sqrt(cdx*cdx+cdy*cdy)<55&&mState.selectedBall&&!mState.cannon.loaded){
+    mState.cannon.loaded={color:mState.selectedBall.color,noteIdx:mState.selectedBall.noteIdx};
+    mState.balls=mState.balls.filter(b=>b!==mState.selectedBall);
+    mSpawnP(cp.x,cp.y-15,mState.cannon.loaded.color,8);
+    mShowMsg('✅ Заредено! Натисни 🔥 ИЗСТРЕЛ',2000);
+    mState.selectedBall=null;
+    if(mState.balls.length===0&&mState.gamePhase==='play'){
+      setTimeout(()=>{if(mState.balls.length===0&&!mState.cannon.loaded) mEnterSwap();},2000);
+    }
+  }
+}
+
+function mGetCannon(){ return {x:mFW*.5, y:mFH-55}; }
+function mGetRing(){   return {x:mRW*.5, y:mRH*.5}; }
+const M_RING_R=Math.min(60,70), M_HOLE_R=16;
+
+function mGetSlotRaw(px,py){
+  const rp=mGetRing(),dx=px-rp.x,dy=py-rp.y;
+  let a=Math.atan2(dy,dx);
+  let rel=((a-(mRingRot-Math.PI/2))%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+  return Math.floor(rel/(Math.PI*2)*8);
+}
+
+function mUpdateBalls(){
+  const top=20,bot=mFH-30,left=10,right=mFW-10;
+  mState.balls.forEach(b=>{
+    if(b.dragging) return; // замразено докато се влачи
+    b.x+=b.vx; b.y+=b.vy;
+    if(b.x-b.r<left){b.x=left+b.r;b.vx=Math.abs(b.vx)*.93;}
+    if(b.x+b.r>right){b.x=right-b.r;b.vx=-Math.abs(b.vx)*.93;}
+    if(b.y-b.r<top){b.y=top+b.r;b.vy=Math.abs(b.vy)*.93;}
+    if(b.y+b.r>bot){b.y=bot-b.r;b.vy=-Math.abs(b.vy)*.93;}
+    b.vx+=(Math.random()-.5)*.04; b.vy+=(Math.random()-.5)*.04;
+    const s=Math.sqrt(b.vx*b.vx+b.vy*b.vy);
+    if(s>3.2){b.vx*=3.2/s;b.vy*=3.2/s;} // max speed +40%
+    if(s<0.6){b.vx*=1.07;b.vy*=1.07;}
+  });
+}
+
+function mUpdateProj(){
+  if(!mState.projectile) return;
+  const p=mState.projectile;
+  if(!p.trail) p.trail=[];
+
+  const prevX=p.x, prevY=p.y;
+  p.vy+=0.10; // намалена гравитация — топчето достига колелото
+  p.vx*=.999; p.x+=p.vx; p.y+=p.vy;
+
+  p.trail.push({x:p.x,y:p.y}); if(p.trail.length>14) p.trail.shift();
+
+  // Колелото е на отделен canvas точно НАД игралното поле.
+  // Центърът на ring canvas-а = (mRW/2, mRH/2) в ring coords.
+  // В координатите на field canvas-а: x=mFW/2, y=-(mRH/2)
+  const ringCX = mFW * 0.5;
+  const ringCY = -(mRH * 0.5); // центърът на колелото над полето
+
+  // Радиусите трябва да съответстват точно на mDrawRing
+  const RR = mRW * 0.42; // външен радиус
+  const HR = mRW * 0.13; // радиус на дупката
+
+  function distR(px,py){ const d=px-ringCX, e=py-ringCY; return Math.sqrt(d*d+e*e); }
+
+  // Swept collision по 6 точки за надеждност при бързи топчета
+  let hitX=p.x, hitY=p.y;
+  let hitDist = distR(p.x, p.y);
+  for(let s=1; s<=5; s++){
+    const t=s/5;
+    const sx=prevX+(p.x-prevX)*t, sy=prevY+(p.y-prevY)*t;
+    const sd=distR(sx,sy);
+    if(sd <= RR+p.r+8){
+      hitX=sx; hitY=sy; hitDist=sd; break;
+    }
+  }
+
+  const inZone = hitDist >= HR-p.r-2 && hitDist <= RR+p.r+8;
+
+  if(inZone){
+    const dx2=hitX-ringCX, dy2=hitY-ringCY;
+    let ang=Math.atan2(dy2,dx2);
+    let rel=((ang-(mRingRot-Math.PI/2))%(Math.PI*2)+Math.PI*2)%(Math.PI*2);
+    const slot=Math.floor(rel/(Math.PI*2)*8);
+    const ni=SHARED.RING_NOTE_MAP[slot];
+
+    if(ni===-1){
+      // ── GAP = дупка ──────────────────────────────────────────────
+      if(mState.gamePhase==='swap' && p.isSwapBall){
+        if(mState.pendingSwapNote<0 && mState.swapsLeft>0){
+          playHitSound();
+          mSpawnP(mFW*.5, 12, SHARED.NOTE_COLORS[p.noteIdx], 14);
+          mSpawnP(mFW*.5, 12, '#ffcc00', 8);
+          mState.pendingSwapNote = p.noteIdx;
+          playTone(p.noteIdx, .8);
+          mRingFlash.fill(0); mRingFlash[slot]=1;
+          mShowPendingBanner(p.noteIdx);
+          mShowMsg(`✅ Вкарана: ${SHARED.NOTES_BG[p.noteIdx]}! Тапни нота в тетрадката.`, 4000);
+          mState.swapsUsed++;
+          // Маркирай топчето като използвано
+          document.querySelectorAll('.mSwapBall').forEach(b=>{
+            if(parseInt(b.dataset.note)===p.noteIdx) b.classList.add('mSwapUsed');
+          });
+          mUpdateStaff();
+        } else if(mState.pendingSwapNote>=0){
+          mShowMsg(`⚠️ Тапни нота за ${SHARED.NOTES_BG[mState.pendingSwapNote]} преди следващ изстрел!`, 2500);
+        }
+        mState.projectile=null; return;
+      } else {
+        // Play phase — пуска se да лети освен ако е точно в центъра
+        if(hitDist < HR+4){ mState.projectile=null; return; }
+        // Иначе продължава (преминава дупката)
+      }
+    } else {
+      // ── NOTE KEY ─────────────────────────────────────────────────
+      if(hitDist >= HR+2 && hitDist <= RR+p.r+2){
+        mRingFlash[slot]=1.0; playTone(ni);
+        mSpawnP(mFW*.5, 12, SHARED.NOTE_COLORS[ni], 14);
+        if(!p.isSwapBall){
+          mState.notes.push(ni);
+          mShowMsg(`🎵 ${SHARED.NOTES_BG[ni]} записана!`);
+          mUpdateStaff();
+        }
+        // Swap топче е ударило клавиш вместо дупката
+        mState.projectile=null; return;
+      }
+      // Swap топче вътре в пространството между дупката и клавишите → пропускаме
+    }
+  }
+
+  // Fallback: swap топче достигна абсолютния център
+  if(hitDist < HR-4 && mState.gamePhase==='swap' && p.isSwapBall){
+    if(mState.pendingSwapNote<0 && mState.swapsLeft>0){
+      playHitSound();
+      mSpawnP(mFW*.5, 10, SHARED.NOTE_COLORS[p.noteIdx], 10);
+      mState.pendingSwapNote=p.noteIdx; playTone(p.noteIdx,.8);
+      mShowPendingBanner(p.noteIdx);
+      mShowMsg(`✅ Вкарана: ${SHARED.NOTES_BG[p.noteIdx]}! Тапни нота в тетрадката.`, 4000);
+      mState.swapsUsed++;
+      document.querySelectorAll('.mSwapBall').forEach(b=>{
+        if(parseInt(b.dataset.note)===p.noteIdx) b.classList.add('mSwapUsed');
+      });
+      mUpdateStaff();
+    }
+    mState.projectile=null; return;
+  }
+
+  // Отскок от земята
+  if(p.y > mFH-30){ p.vy*=-.38; p.vx*=.62; p.y=mFH-30; if(Math.abs(p.vy)<.6) mState.projectile=null; }
+  // Излизане извън полето
+  if(p.x<-30 || p.x>mFW+30 || p.y > mFH+60) mState.projectile=null;
+  // Излязло над колелото
+  if(p.y < -(mRH+40)) mState.projectile=null;
+}
+
+function mSpawnP(x,y,color,n){
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,s=1+Math.random()*2.5;
+    mState.particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,r:2+Math.random()*4,color,life:1,decay:.05+Math.random()*.04});}
+}
+
+let mMsgT=null;
+function mShowMsg(txt,dur=2200){
+  const m=document.getElementById('mobileMsg'); m.textContent=txt; m.style.display='block';
+  if(mMsgT) clearTimeout(mMsgT); mMsgT=setTimeout(()=>m.style.display='none',dur);
+}
+function mShowPendingBanner(ni){
+  const b=document.getElementById('mobilePendingBanner');
+  if(ni<0){ b.style.display='none'; return; }
+  b.textContent=`🎵 Вкарана: ${SHARED.NOTES_BG[ni]} — тапни нота в тетрадката за замяна!`;
+  b.style.display='block';
+  // Banner остава докато не се направи замяна
+}
+
+// ── Phase helpers ─────────────────────────────────────────────────
+function mShowPhaseOverlay(title, text, btnLabel, onConfirm){
+  const ov = document.getElementById('mobilePhaseOverlay');
+  document.getElementById('mobilePhaseOverlayTitle').textContent = title;
+  document.getElementById('mobilePhaseOverlayText').textContent = text;
+  const btn = document.getElementById('mobilePhaseOverlayBtn');
+  btn.textContent = btnLabel;
+  ov.classList.add('show');
+  // Remove old listener and add new
+  const newBtn = btn.cloneNode(true);
+  btn.parentNode.replaceChild(newBtn, btn);
+  newBtn.addEventListener('touchend', e=>{ e.preventDefault(); ov.classList.remove('show'); onConfirm(); });
+  newBtn.addEventListener('click', ()=>{ ov.classList.remove('show'); onConfirm(); });
+}
+
+function mEnterPiano(){
+  if(mState.gamePhase==='piano') return;
+  mState.gamePhase='piano';
+
+  // Скрий swap UI
+  document.getElementById('mobileSwapBalls').classList.remove('visible');
+  document.getElementById('mobileSwapInfo').textContent='';
+  mShowPendingBanner(-1);
+
+  // Обнови top bar tag
+  const tag = document.getElementById('mobilePhaseTag');
+  tag.classList.remove('active');
+  tag.style.background='rgba(67,160,71,0.85)';
+  tag.style.color='#fff';
+  tag.classList.add('active');
+  tag.textContent='🎹 ПИАНО';
+
+  // Покажи пианото
+  document.getElementById('mobilePianoWrap').classList.add('visible');
+  document.getElementById('mobilePlayBtn').style.display='block';
+  mBuildPiano(); // rebuild now that wrap is visible and has real offsetWidth
+
+  mUpdateStaff();
+
+  // Phase overlay
+  mShowPhaseOverlay(
+    '🎹 Фаза ПИАНО',
+    'Изсвири записаната мелодия на пианото!\nНатисни ▶ за да видиш първата нота.',
+    '▶ Към пианото!',
+    ()=>{}
+  );
+}
+
+function mEnterSwap(){
+  if(mState.gamePhase==='swap' || mState.gamePhase==='piano') return;
+  mState.gamePhase='swap';
+  mState.pendingSwapNote=-1;
+  mState.selectedNote=-1;
+  mState.swapsLeft=3;
+  mState.swapsUsed=0;
+  mState.shotAttemptsLeft=3; // 3 изстрела общо
+
+  const tag = document.getElementById('mobilePhaseTag');
+  tag.classList.add('active');
+  tag.textContent='🔄 СМЯНА';
+
+  document.getElementById('mobilePianoWrap').classList.remove('visible');
+  document.getElementById('mobilePlayBtn').style.display='none';
+
+  mShowPendingBanner(-1);
+
+  // Build and show swap panel immediately — never leaves bottom-right empty
+  mBuildSwapBalls();
+  document.getElementById('mobileSwapBalls').classList.add('visible');
+
+  mUpdateStaff();
+
+  mShowPhaseOverlay(
+    '🔄 Фаза СМЯНА',
+    'Можеш да смениш до 3 ноти.\nИзбери топче → стреляй в оранжевата ДУПКА → тапни нота за замяна.',
+    'Разбрах →',
+    ()=>{}
+  );
+}
+
+function mBuildSwapBalls(){
+  const row=document.getElementById('mSwapBallRow'); row.innerHTML='';
+  for(let i=0;i<7;i++){
+    const b=document.createElement('div'); b.className='mSwapBall';
+    b.style.background=SHARED.NOTE_COLORS[i]; b.textContent=SHARED.NOTES_BG[i];
+    b.dataset.note=i;
+    b.addEventListener('click',()=>mSelectSwapBall(i,b));
+    b.addEventListener('touchend',e=>{e.preventDefault();mSelectSwapBall(i,b);});
+    row.appendChild(b);
+  }
+}
+
+function mSelectSwapBall(ni,el){
+  if(mState.gamePhase!=='swap'){return;}
+  if(mState.shotAttemptsLeft<=0){
+    mShowMsg('❌ Изчерпа 3-те опита!'); setTimeout(()=>mEnterPiano(),1200); return;
+  }
+  if(mState.pendingSwapNote>=0){
+    mShowMsg(`⚠️ Тапни нота в тетрадката за замяна с ${SHARED.NOTES_BG[mState.pendingSwapNote]}!`);return;
+  }
+  if(mState.cannon.loaded){
+    mShowMsg('🔴 Оръдието е заредено — изстреляй го в дупката!');return;
+  }
+  if(el.classList.contains('mSwapUsed')){
+    mShowMsg('❌ Това топче вече е използвано!');return;
+  }
+  document.querySelectorAll('.mSwapBall').forEach(b=>b.classList.remove('mSwapSelected'));
+  el.classList.add('mSwapSelected');
+  mState.cannon.loaded={color:SHARED.NOTE_COLORS[ni], noteIdx:ni};
+  mState.cannon.isSwap=true;
+  // Keep swap panel visible — do NOT hide it
+  mShowMsg(`🎯 ${SHARED.NOTES_BG[ni]} заредена! Стреляй в ДУПКАТА (оранжева). Опит ${4-mState.shotAttemptsLeft}/3`, 3500);
+}
+
+function mLaunch(){
+  if(!mState.cannon.loaded||mState.projectile) return;
+  if(mState.pendingSwapNote>=0){
+    mShowMsg(`⚠️ Тапни нота за ${SHARED.NOTES_BG[mState.pendingSwapNote]}!`);return;
+  }
+  // В swap фаза: всеки изстрел е опит, включително пропуснатите
+  if(mState.gamePhase==='swap'){
+    if(mState.shotAttemptsLeft<=0){
+      mShowMsg('❌ Изчерпа 3-те опита! Преминаваш към пианото...');
+      setTimeout(()=>mEnterPiano(), 1200);
+      return;
+    }
+    mState.shotAttemptsLeft--;
+    mUpdateStaff(); // обнови брояча веднага
+  }
+
+  const cp=mGetCannon(), a=mState.cannon.angle, bL=40;
+  const mx=cp.x+Math.cos(a)*bL, my=cp.y+Math.sin(a)*bL;
+
+  const ringCY = -(mRH * 0.5);
+  const dy = ringCY - my;
+  const gravity = 0.10;
+  const minVy = Math.sqrt(2 * gravity * Math.abs(dy)) * 1.15;
+  const totalSpd = Math.max(minVy / Math.abs(Math.sin(a) || 0.1), 12);
+  const spd = Math.min(totalSpd, 22);
+
+  mState.projectile={
+    x: mx, y: my,
+    vx: Math.cos(a) * spd,
+    vy: Math.sin(a) * spd,
+    r: 12,
+    color: mState.cannon.loaded.color,
+    noteIdx: mState.cannon.loaded.noteIdx,
+    isSwapBall: mState.cannon.isSwap || false,
+    trail: []
+  };
+  mSpawnP(mx, my, mState.cannon.loaded.color, 8);
+  playShot();
+  mState.cannon.loaded=null; mState.cannon.isSwap=false;
+
+  // Ако след този изстрел няма повече опити → чакаме да кацне и минаваме
+  if(mState.gamePhase==='swap' && mState.shotAttemptsLeft<=0){
+    setTimeout(()=>{
+      if(mState.gamePhase==='swap' && mState.pendingSwapNote<0){
+        mEnterPiano();
+      }
+    }, 3000);
+  }
+}
+
+function mBuildPiano(){
+  const wrap=document.getElementById('mobilePianoKeys'); wrap.innerHTML='';
+  const pw=document.getElementById('mobilePianoWrap');
+  const totalW=(pw.offsetWidth>0?pw.offsetWidth:160)-8;
+  const kW=Math.floor(totalW/7);
+  const bW=Math.max(10, Math.floor(kW*0.55)); // ширина на черен клавиш
+  const outer=document.createElement('div'); outer.className='mPianoKeys';
+  outer.style.cssText='position:relative;display:flex;';
+
+  // Бели клавиши
+  for(let ni=0;ni<7;ni++){
+    const k=document.createElement('div'); k.className='mPianoKey'; k.style.width=kW+'px';
+    k.textContent=SHARED.NOTES_BG[ni].slice(0,2);
+    k.addEventListener('click',()=>{playTone(ni);k.classList.add('mPressed');mCheckPiano(ni);setTimeout(()=>k.classList.remove('mPressed'),200);});
+    k.addEventListener('touchend',e=>{e.preventDefault();playTone(ni);k.classList.add('mPressed');mCheckPiano(ni);setTimeout(()=>k.classList.remove('mPressed'),200);});
+    outer.appendChild(k);
+  }
+
+  // Черни клавиши — реално пиано наредба
+  // Позиции: C#=меж.0-1, D#=меж.1-2, (без E-F), F#=меж.3-4, G#=меж.4-5, A#=меж.5-6
+  // whiteIdx = индекс на левия бял клавиш, semitone = полутон за аудио
+  const blackKeys = [
+    { whiteIdx: 0, semitone: 0.5, label: 'C#' }, // между C и D
+    { whiteIdx: 1, semitone: 1.5, label: 'D#' }, // между D и E
+    // без E-F
+    { whiteIdx: 3, semitone: 3.5, label: 'F#' }, // между F и G
+    { whiteIdx: 4, semitone: 4.5, label: 'G#' }, // между G и A
+    { whiteIdx: 5, semitone: 5.5, label: 'A#' }, // между A и B
+    // без B-C
+  ];
+  blackKeys.forEach(({whiteIdx, semitone})=>{
+    const bk=document.createElement('div'); bk.className='mPianoKey mBlack';
+    // Центрирай черния клавиш между двата бели: left = (whiteIdx+1)*kW - bW/2
+    const left = (whiteIdx+1)*kW - Math.floor(bW/2);
+    bk.style.cssText=`position:absolute;left:${left}px;top:0;width:${bW}px;height:38px;z-index:5;`;
+    bk.addEventListener('click',()=>playTone(semitone));
+    bk.addEventListener('touchend',e=>{e.preventDefault();playTone(semitone);});
+    outer.appendChild(bk);
+  });
+
+  wrap.appendChild(outer);
+}
+
+function mCheckPiano(ni){
+  if(!mPlayMode) return;
+  const exp=mState.notes[mPlayIdx]%7;
+  if(ni===exp){
+    mPlayIdx++;
+    if(mPlayIdx>=mState.notes.length){
+      mShowMsg('🎉 Браво! Перфектно!',3500);
+      mPlayMode=false; mPlayIdx=0;
+      setTimeout(mShowAutoPlayBtn,600);
+    }
+  } else{mShowMsg(`❌ Грешна нота! Очаква: ${SHARED.NOTES_BG[exp]}`);mPlayIdx=0;}
+}
+function mShowAutoPlayBtn(){
+  let btn=document.getElementById('mAutoPlayBtn');
+  if(!btn){
+    btn=document.createElement('button');
+    btn.id='mAutoPlayBtn';
+    btn.style.cssText='position:fixed;bottom:140px;left:50%;transform:translateX(-50%);padding:10px 22px;background:linear-gradient(135deg,#43a047,#1b5e20);color:#fff;border:none;border-radius:12px;font-size:13px;font-weight:bold;cursor:pointer;box-shadow:0 3px 14px rgba(67,160,71,.55);z-index:600;white-space:nowrap;';
+    btn.textContent='🎵 Автоматично изсвирване';
+    btn.addEventListener('click',mAutoPlay);
+    btn.addEventListener('touchend',e=>{e.preventDefault();mAutoPlay();});
+    document.getElementById('mobileGame').appendChild(btn);
+  }
+  btn.style.display='block';
+}
+function mAutoPlay(){
+  if(!mState.notes.length) return;
+  const btn=document.getElementById('mAutoPlayBtn');
+  if(btn) btn.style.display='none';
+  getAudio().resume();
+  let idx=0;
+  function playNext(){
+    if(idx>=mState.notes.length) return;
+    const ni=mState.notes[idx]%7;
+    playTone(ni,0.9);
+    const whites=document.querySelectorAll('#mobilePianoKeys .mPianoKey:not(.mBlack)');
+    if(whites[ni]){whites[ni].classList.add('mPressed');setTimeout(()=>whites[ni].classList.remove('mPressed'),300);}
+    idx++;
+    if(idx<mState.notes.length) setTimeout(playNext,600);
+    else setTimeout(()=>{if(btn) btn.style.display='block';},800);
+  }
+  playNext();
+}
+
+function mUpdateStaff(){
+  const sc=document.getElementById('mobileStaffContainer'); sc.innerHTML='';
+  const swapInfo=document.getElementById('mobileSwapInfo');
+  if(mState.gamePhase==='swap'){
+    swapInfo.innerHTML=`Опити: <strong>${mState.shotAttemptsLeft}</strong>/3` +
+      (mState.pendingSwapNote>=0
+        ? ` · <span style="color:#ffb300">↓ тапни нота</span>`
+        : ' · <span style="color:#aaa">избери →</span>');
+  } else {
+    swapInfo.textContent='';
+  }
+
+  const el=renderStaffSVG(
+    mState.notes, mState.selectedNote, mState.pendingSwapNote, mState.gamePhase,
+    (idx)=>{
+      if(mState.gamePhase==='swap' && mState.pendingSwapNote>=0 && mState.swapsLeft>0){
+        const oldNote=mState.notes[idx];
+        mState.notes[idx]=mState.pendingSwapNote;
+        mState.swapsLeft--;
+        playTone(mState.pendingSwapNote,.8);
+        mSpawnP(mFW*.5, mFH*.5, SHARED.NOTE_COLORS[mState.pendingSwapNote], 8);
+        mShowMsg(`✅ ${SHARED.NOTES_BG[oldNote]} → ${SHARED.NOTES_BG[mState.pendingSwapNote]} заменена!`, 2500);
+        mState.pendingSwapNote=-1;
+        mState.selectedNote=-1;
+        mShowPendingBanner(-1);
+        mUpdateStaff();
+        if(mState.swapsLeft<=0){
+          // Смените свършиха → автоматично към пианото
+          setTimeout(()=>{ mEnterPiano(); }, 2200);
+        }
+      } else if(mState.gamePhase==='swap' && mState.pendingSwapNote<0){
+        mState.selectedNote = mState.selectedNote===idx ? -1 : idx;
+        mUpdateStaff();
+      }
+      // piano phase — не правим нищо при клик на нота
+    }
+  );
+  sc.appendChild(el);
+}
+
+// Mobile drawing
+function mDrawRing(){
+  const cx=mRW*.5, cy=mRH*.5;
+  const RR=mRW*.42, IR=mRW*.13;
+  mRingRot+=M_RING_ROT;
+  for(let i=0;i<8;i++){if(mRingFlash[i]>0) mRingFlash[i]=Math.max(0,mRingFlash[i]-.035);}
+  mRingCtx.clearRect(0,0,mRW,mRH);
+  mRingCtx.save();
+  mRingCtx.shadowColor='rgba(255,255,200,.3)'; mRingCtx.shadowBlur=10;
+  mRingCtx.beginPath(); mRingCtx.arc(cx,cy,RR+3,0,Math.PI*2);
+  mRingCtx.strokeStyle='rgba(255,255,180,.2)'; mRingCtx.lineWidth=2; mRingCtx.stroke(); mRingCtx.shadowBlur=0;
+  const sA=(Math.PI*2)/8;
+  for(let i=0;i<8;i++){
+    const a1=mRingRot-Math.PI/2+i*sA,a2=a1+sA,gap=.03;
+    const ni=SHARED.RING_NOTE_MAP[i];
+    mRingCtx.beginPath();
+    mRingCtx.moveTo(cx+Math.cos(a1+gap)*(IR+1),cy+Math.sin(a1+gap)*(IR+1));
+    mRingCtx.arc(cx,cy,IR+1,a1+gap,a2-gap);
+    mRingCtx.lineTo(cx+Math.cos(a2-gap)*RR,cy+Math.sin(a2-gap)*RR);
+    mRingCtx.arc(cx,cy,RR,a2-gap,a1+gap,true); mRingCtx.closePath();
+    if(ni===-1){mRingCtx.fillStyle='rgba(5,15,5,.8)';mRingCtx.fill();mRingCtx.strokeStyle='#1a1a1a';mRingCtx.lineWidth=.8;mRingCtx.stroke();continue;}
+    const fl=mRingFlash[i],mid=(a1+a2)/2;
+    mRingCtx.fillStyle=fl>.1?lightenColor(SHARED.NOTE_COLORS[ni],60):'rgba(255,255,255,.95)';
+    mRingCtx.fill(); mRingCtx.strokeStyle='#555'; mRingCtx.lineWidth=1; mRingCtx.stroke();
+    mRingCtx.save(); mRingCtx.font=`bold ${Math.max(7,Math.floor(mRW*.065))}px Arial`;
+    mRingCtx.textAlign='center'; mRingCtx.textBaseline='middle'; mRingCtx.fillStyle='rgba(40,40,40,.9)';
+    const lr=(IR+RR)*.58;
+    mRingCtx.fillText(SHARED.NOTES_BG[ni],cx+Math.cos(mid)*lr,cy+Math.sin(mid)*lr);
+    mRingCtx.restore();
+  }
+  // Black keys
+  [0,1,3,4,5].forEach(slot=>{
+    const a1=mRingRot-Math.PI/2+(slot+.68)*sA,a2=mRingRot-Math.PI/2+(slot+1.32)*sA;
+    const bI=IR+1,bO=IR+(RR-IR)*.55;
+    mRingCtx.beginPath(); mRingCtx.moveTo(cx+Math.cos(a1)*bI,cy+Math.sin(a1)*bI);
+    mRingCtx.arc(cx,cy,bI,a1,a2); mRingCtx.lineTo(cx+Math.cos(a2)*bO,cy+Math.sin(a2)*bO);
+    mRingCtx.arc(cx,cy,bO,a2,a1,true); mRingCtx.closePath();
+    mRingCtx.fillStyle='#111'; mRingCtx.fill(); mRingCtx.strokeStyle='#333'; mRingCtx.lineWidth=.8; mRingCtx.stroke();
+  });
+  // Hole
+  const hA=mState.gamePhase==='swap';
+  mRingCtx.beginPath(); mRingCtx.arc(cx,cy,IR,0,Math.PI*2);
+  const hg=mRingCtx.createRadialGradient(cx-3,cy-3,1,cx,cy,IR);
+  if(hA){hg.addColorStop(0,'#ff6f00');hg.addColorStop(.6,'#e65100');hg.addColorStop(1,'#bf360c');mRingCtx.shadowColor='rgba(255,100,0,.5)';mRingCtx.shadowBlur=8;}
+  else{hg.addColorStop(0,'#1565c0');hg.addColorStop(.6,'#0d47a1');hg.addColorStop(1,'#01579b');}
+  mRingCtx.fillStyle=hg; mRingCtx.fill(); mRingCtx.shadowBlur=0;
+  mRingCtx.strokeStyle=hA?'#ffb300':'#64b5f6'; mRingCtx.lineWidth=2; mRingCtx.stroke();
+  mRingCtx.fillStyle='rgba(255,255,255,.8)'; mRingCtx.font=`bold ${Math.max(6,Math.floor(mRW*.07))}px Arial`;
+  mRingCtx.textAlign='center'; mRingCtx.textBaseline='middle';
+  mRingCtx.fillText(hA?'СМЯНА':'HOLE',cx,cy);
+  mRingCtx.restore();
+}
+
+function mDrawField(){
+  mFieldCtx.clearRect(0,0,mFW,mFH);
+  // Background
+  const sky=mFieldCtx.createLinearGradient(0,0,0,mFH*.75);
+  sky.addColorStop(0,'#060f06'); sky.addColorStop(1,'#0e2a0e');
+  mFieldCtx.fillStyle=sky; mFieldCtx.fillRect(0,0,mFW,mFH);
+  for(let i=0;i<mFW;i+=36){mFieldCtx.fillStyle=i%72===0?'#1a4a1a':'#2a6a2a';mFieldCtx.fillRect(i,mFH*.75,36,mFH*.25);}
+  mFieldCtx.fillStyle='#153a15'; mFieldCtx.fillRect(0,mFH-28,mFW,28);
+
+  // Cannon
+  const cp=mGetCannon();
+  mFieldCtx.save(); mFieldCtx.translate(cp.x,cp.y);
+  mFieldCtx.beginPath(); mFieldCtx.ellipse(0,8,32,6,0,0,Math.PI*2);
+  mFieldCtx.fillStyle='rgba(0,0,0,.4)'; mFieldCtx.fill();
+  const bg3=mFieldCtx.createLinearGradient(-28,-5,28,8); bg3.addColorStop(0,'#fff176');bg3.addColorStop(.5,'#f9a825');bg3.addColorStop(1,'#e65100');
+  mFieldCtx.beginPath(); mFieldCtx.roundRect(-28,-5,56,14,4); mFieldCtx.fillStyle=bg3; mFieldCtx.fill();
+  mFieldCtx.strokeStyle='#bf6900'; mFieldCtx.lineWidth=1.2; mFieldCtx.stroke();
+  const sg2=mFieldCtx.createLinearGradient(-14,-16,14,-3); sg2.addColorStop(0,'#64b5f6');sg2.addColorStop(1,'#1565c0');
+  mFieldCtx.beginPath(); mFieldCtx.roundRect(-14,-16,28,14,3); mFieldCtx.fillStyle=sg2; mFieldCtx.fill(); mFieldCtx.strokeStyle='#0d47a1'; mFieldCtx.lineWidth=1; mFieldCtx.stroke();
+  mFieldCtx.save(); mFieldCtx.rotate(mState.cannon.angle+Math.PI/2);
+  const bL2=40,bW2=11;
+  const bG=mFieldCtx.createLinearGradient(-bW2/2,0,bW2/2,0); bG.addColorStop(0,'#e65100');bG.addColorStop(.4,'#f9a825');bG.addColorStop(.7,'#fdd835');bG.addColorStop(1,'#bf6900');
+  mFieldCtx.beginPath(); mFieldCtx.roundRect(-bW2/2,-bL2,bW2,bL2+3,[0,0,3,3]); mFieldCtx.fillStyle=bG; mFieldCtx.fill(); mFieldCtx.strokeStyle='#bf6900'; mFieldCtx.lineWidth=1.2; mFieldCtx.stroke();
+  // Blue rings
+  [.3,.6,.8].forEach(t=>{const y=-bL2+t*bL2;mFieldCtx.beginPath();mFieldCtx.rect(-bW2/2-1,y-2,bW2+2,4);const rg2=mFieldCtx.createLinearGradient(-bW2/2,y,bW2/2,y);rg2.addColorStop(0,'#1565c0');rg2.addColorStop(.5,'#64b5f6');rg2.addColorStop(1,'#1565c0');mFieldCtx.fillStyle=rg2;mFieldCtx.fill();});
+  if(mState.cannon.loaded){
+    const bg4=mFieldCtx.createRadialGradient(-2,-bL2-1,1,0,-bL2,10); bg4.addColorStop(0,lightenColor(mState.cannon.loaded.color,50));bg4.addColorStop(1,mState.cannon.loaded.color);
+    mFieldCtx.beginPath();mFieldCtx.arc(0,-bL2,10,0,Math.PI*2);mFieldCtx.fillStyle=bg4;mFieldCtx.fill();mFieldCtx.strokeStyle='rgba(255,255,255,.5)';mFieldCtx.lineWidth=1.5;mFieldCtx.stroke();
+  }
+  mFieldCtx.restore();
+  // Red trigger
+  const tg2=mFieldCtx.createRadialGradient(14,-2,1,16,-1,8); tg2.addColorStop(0,'#ff8a80');tg2.addColorStop(1,'#c62828');
+  mFieldCtx.beginPath();mFieldCtx.arc(16,-1,8,0,Math.PI*2);mFieldCtx.fillStyle=tg2;mFieldCtx.fill();mFieldCtx.strokeStyle='#fff';mFieldCtx.lineWidth=1.2;mFieldCtx.stroke();
+  mFieldCtx.restore();
+
+  // Aim guide — гравитацията съответства на mUpdateProj (0.10)
+  if(mState.cannon.loaded){
+    const a2=mState.cannon.angle, bL3=40;
+    const mxG=cp.x+Math.cos(a2)*bL3, myG=cp.y+Math.sin(a2)*bL3;
+    // Изчисляваме скоростта по същата формула като mLaunch
+    const ringCYg = -(mRH*0.5);
+    const dyG = ringCYg - myG;
+    const minVyG = Math.sqrt(2*0.10*Math.abs(dyG))*1.15;
+    const guideSpd = Math.min(Math.max(minVyG/Math.abs(Math.sin(a2)||0.1), 12), 22);
+    let vx2=Math.cos(a2)*guideSpd, vy2=Math.sin(a2)*guideSpd, px2=mxG, py2=myG;
+    mFieldCtx.save(); mFieldCtx.strokeStyle='rgba(255,255,100,.25)'; mFieldCtx.lineWidth=1.3; mFieldCtx.setLineDash([4,7]);
+    mFieldCtx.beginPath(); mFieldCtx.moveTo(px2,py2);
+    for(let i=0;i<60;i++){vy2+=.10; px2+=vx2; py2+=vy2; if(i%2===0) mFieldCtx.lineTo(px2,py2);}
+    mFieldCtx.stroke(); mFieldCtx.setLineDash([]); mFieldCtx.restore();
+  }
+
+  // Balls
+  mState.balls.forEach(b=>{
+    const isDragging = b.dragging;
+    const drawR = isDragging ? b.r * 1.18 : b.r; // slightly bigger when dragging
+    const g=mFieldCtx.createRadialGradient(b.x-drawR*.3,b.y-drawR*.35,1,b.x,b.y,drawR);
+    g.addColorStop(0,lightenColor(b.color,50)); g.addColorStop(.6,b.color); g.addColorStop(1,darkenColor(b.color,40));
+    // Glow for dragging
+    if(isDragging){
+      mFieldCtx.shadowColor = b.color;
+      mFieldCtx.shadowBlur = 18;
+    }
+    mFieldCtx.beginPath(); mFieldCtx.arc(b.x,b.y,drawR,0,Math.PI*2); mFieldCtx.fillStyle=g; mFieldCtx.fill();
+    mFieldCtx.shadowBlur = 0;
+    if(isDragging){
+      mFieldCtx.strokeStyle='#ffd54f'; mFieldCtx.lineWidth=3.5;
+    } else if(b.selected){
+      mFieldCtx.strokeStyle='#ffd54f'; mFieldCtx.lineWidth=3;
+    } else {
+      mFieldCtx.strokeStyle='rgba(255,255,255,.25)'; mFieldCtx.lineWidth=1.5;
+    }
+    mFieldCtx.stroke();
+    mFieldCtx.beginPath();mFieldCtx.arc(b.x-drawR*.25,b.y-drawR*.3,drawR*.24,0,Math.PI*2);mFieldCtx.fillStyle='rgba(255,255,255,.35)';mFieldCtx.fill();
+    if(b.selected || isDragging){
+      mFieldCtx.fillStyle='rgba(255,213,79,.9)'; mFieldCtx.font=`bold ${Math.max(9,Math.floor(b.r*.5))}px Arial`;
+      mFieldCtx.textAlign='center'; mFieldCtx.textBaseline='middle';
+      mFieldCtx.shadowColor='rgba(0,0,0,.7)'; mFieldCtx.shadowBlur=2;
+      mFieldCtx.fillText('✓',b.x,b.y); mFieldCtx.shadowBlur=0;
+    }
+  });
+
+  // Drop zone indicator — показва се при drag на топче
+  const draggingBall = mState.balls.find(b=>b.dragging);
+  if(draggingBall && !mState.cannon.loaded){
+    const cp2=mGetCannon();
+    const ddx=draggingBall.x-cp2.x, ddy=draggingBall.y-cp2.y;
+    const nearCannon = Math.sqrt(ddx*ddx+ddy*ddy) < 80;
+    // Dashed line from ball to cannon
+    mFieldCtx.strokeStyle='rgba(255,213,79,.55)'; mFieldCtx.lineWidth=1.8; mFieldCtx.setLineDash([5,5]);
+    mFieldCtx.beginPath(); mFieldCtx.moveTo(draggingBall.x,draggingBall.y); mFieldCtx.lineTo(cp2.x,cp2.y-35);
+    mFieldCtx.stroke(); mFieldCtx.setLineDash([]);
+    // Cannon drop target
+    mFieldCtx.beginPath(); mFieldCtx.arc(cp2.x,cp2.y-35,nearCannon?26:20,0,Math.PI*2);
+    mFieldCtx.strokeStyle=nearCannon?'rgba(255,213,79,.95)':'rgba(255,213,79,.5)';
+    mFieldCtx.lineWidth=nearCannon?3:2; mFieldCtx.setLineDash([4,4]); mFieldCtx.stroke(); mFieldCtx.setLineDash([]);
+    if(nearCannon){
+      mFieldCtx.shadowColor='rgba(255,213,79,.6)'; mFieldCtx.shadowBlur=12;
+      mFieldCtx.beginPath(); mFieldCtx.arc(cp2.x,cp2.y-35,22,0,Math.PI*2);
+      mFieldCtx.fillStyle='rgba(255,213,79,.15)'; mFieldCtx.fill(); mFieldCtx.shadowBlur=0;
+    }
+    mFieldCtx.fillStyle='rgba(255,213,79,.9)'; mFieldCtx.font='bold 10px Arial';
+    mFieldCtx.textAlign='center'; mFieldCtx.textBaseline='middle';
+    mFieldCtx.fillText(nearCannon?'ПУСНИ!':'ТАЩИ ТУК',cp2.x,cp2.y-35);
+  } else if(mState.selectedBall && !mState.cannon.loaded && !draggingBall){
+    const cp2=mGetCannon();
+    mFieldCtx.strokeStyle='rgba(255,213,79,.4)';mFieldCtx.lineWidth=1.2;mFieldCtx.setLineDash([4,4]);
+    mFieldCtx.beginPath();mFieldCtx.moveTo(mState.selectedBall.x,mState.selectedBall.y);mFieldCtx.lineTo(cp2.x,cp2.y-30);
+    mFieldCtx.stroke();mFieldCtx.setLineDash([]);
+    mFieldCtx.beginPath();mFieldCtx.arc(cp2.x,cp2.y-30,18,0,Math.PI*2);
+    mFieldCtx.strokeStyle='rgba(255,213,79,.6)';mFieldCtx.lineWidth=2;mFieldCtx.setLineDash([4,4]);
+    mFieldCtx.stroke();mFieldCtx.setLineDash([]);
+    mFieldCtx.fillStyle='rgba(255,213,79,.8)';mFieldCtx.font='bold 9px Arial';
+    mFieldCtx.textAlign='center';mFieldCtx.textBaseline='middle';mFieldCtx.fillText('ТАП',cp2.x,cp2.y-30);
+  }
+
+  // Projectile
+  if(mState.projectile){
+    const p=mState.projectile;
+    if(p.trail) p.trail.forEach((pt,i)=>{const al=i/p.trail.length*.4;mFieldCtx.beginPath();mFieldCtx.arc(pt.x,pt.y,p.r*(i/p.trail.length)*.7,0,Math.PI*2);mFieldCtx.fillStyle=`rgba(255,255,255,${al})`;mFieldCtx.fill();});
+    const pg=mFieldCtx.createRadialGradient(p.x-3,p.y-3,1,p.x,p.y,p.r); pg.addColorStop(0,lightenColor(p.color,60));pg.addColorStop(1,p.color);
+    mFieldCtx.beginPath();mFieldCtx.arc(p.x,p.y,p.r,0,Math.PI*2);mFieldCtx.fillStyle=pg;mFieldCtx.fill();mFieldCtx.strokeStyle='rgba(255,255,255,.5)';mFieldCtx.lineWidth=2;mFieldCtx.stroke();
+  }
+
+  // Particles
+  mState.particles=mState.particles.filter(pt=>pt.life>0);
+  mState.particles.forEach(pt=>{pt.x+=pt.vx;pt.y+=pt.vy;pt.vy+=.08;pt.life-=pt.decay;pt.r*=.97;
+    mFieldCtx.beginPath();mFieldCtx.arc(pt.x,pt.y,pt.r,0,Math.PI*2);mFieldCtx.fillStyle=`rgba(${hexToRgbStr(pt.color)},${pt.life})`;mFieldCtx.fill();});
+
+  // "Selected ball" name
+  if(mState.selectedBall){
+    mFieldCtx.fillStyle='rgba(255,213,79,.9)'; mFieldCtx.font='bold 11px Arial';
+    mFieldCtx.textAlign='left'; mFieldCtx.textBaseline='top';
+    mFieldCtx.fillText(`Избрано: ${SHARED.NOTES_BG[mState.selectedBall.noteIdx]}`,8,6);
+  }
+}
+
+function mLoop(){
+  mUpdateBalls(); mUpdateProj();
+  mDrawRing(); mDrawField();
+  mState.rafId=requestAnimationFrame(mLoop);
+}
+</script>
+</body>
+</html>
