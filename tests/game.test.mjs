@@ -24,6 +24,10 @@ test('no duplicate element ids in HTML', () => {
   assert.deepEqual([...dup], [], `duplicate ids: ${[...dup]}`);
 });
 
+test('page declares a favicon', () => {
+  assert.ok(/<link rel="icon"/.test(html), 'favicon <link rel="icon"> present in <head>');
+});
+
 test('every getElementById target exists in the HTML (or is created at runtime)', () => {
   const created = new Set(['dAutoPlayBtn', 'mAutoPlayBtn', 'resizeWarnMsg']); // built dynamically
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map(m => m[1]));
